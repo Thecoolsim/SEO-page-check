@@ -1,8 +1,9 @@
 (function(){
 const KEY='seo-check-v1';
 const $=id=>document.getElementById(id);
-const TEXT=['kp','title','slug','domain','desc','alt','tags'];
-const EMPTY={kp:'',title:'',slug:'',domain:'',desc:'',body:'',alt:'',tags:'',img:null,tech:null};
+const TEXT=['kp','title','slug','domain','desc','alt','tags','vurl','vtitle','vdesc','vthumb','vdate','vdur','vtrans'];
+const EMPTY={type:'article',kp:'',title:'',slug:'',domain:'',desc:'',body:'',alt:'',tags:'',img:null,tech:null,
+  vurl:'',vtitle:'',vdesc:'',vthumb:'',vdate:'',vdur:'',vtrans:'',vcap:false};
 let S=Object.assign({},EMPTY);
 try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v)Object.assign(S,v);delete S.links}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){try{const c=Object.assign({},S,{img:S.img?Object.assign({},S.img,{src:null}):null});localStorage.setItem(KEY,JSON.stringify(c))}catch(e2){}}}
@@ -43,10 +44,73 @@ function linksIn(raw,domain){
   return {internal,outbound,total:internal+outbound};
 }
 
+// Video helpers
+function parseVideo(raw){
+  let u=(raw||'').trim();if(!u)return null;
+  const src=u.match(/src\s*=\s*["']([^"']+)["']/i);if(src)u=src[1];
+  if(/^\/\//.test(u))u='https:'+u;else if(!/^https?:/i.test(u))u='https://'+u;
+  let x;try{x=new URL(u)}catch(e){return {bad:true}}
+  const h=x.hostname.replace(/^(www|m)\./,'');
+  if(/^(youtube\.com|youtube-nocookie\.com|youtu\.be)$/.test(h)){
+    let id=h==='youtu.be'?x.pathname.split('/')[1]:x.searchParams.get('v');
+    if(!id){const m=x.pathname.match(/^\/(?:embed|shorts|live|v)\/([\w-]{11})/);if(m)id=m[1]}
+    if(!/^[\w-]{11}$/.test(id||''))return {provider:'YouTube',bad:true};
+    return {provider:'YouTube',id,watch:'https://www.youtube.com/watch?v='+id,embed:'https://www.youtube.com/embed/'+id,at:t=>'https://www.youtube.com/watch?v='+id+'&t='+t+'s'};
+  }
+  if(/(^|\.)vimeo\.com$/.test(h)){
+    const seg=x.pathname.split('/').filter(Boolean);let i=-1;seg.forEach((p,k)=>{if(/^\d+$/.test(p))i=k});
+    if(i<0)return {provider:'Vimeo',bad:true};
+    const id=seg[i],hash=(/^[0-9a-f]+$/i.test(seg[i+1]||'')?seg[i+1]:x.searchParams.get('h'))||'';
+    const watch='https://vimeo.com/'+id+(hash?'/'+hash:'');
+    return {provider:'Vimeo',id,watch,embed:'https://player.vimeo.com/video/'+id+(hash?'?h='+hash:''),at:t=>watch+'#t='+t+'s'};
+  }
+  return {bad:true};
+}
+// Seconds from "4:35", "1:02:03", "275" or "PT4M35S"; null when empty, NaN when unreadable.
+function parseDur(v){
+  const s=String(v||'').trim();if(!s)return null;let m;
+  if(/^\d+$/.test(s))return +s;
+  if((m=s.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/)))return (+m[1]||0)*3600+ +m[2]*60+ +m[3];
+  if((m=s.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/i))&&s.length>2)return (+m[1]||0)*3600+(+m[2]||0)*60+Math.round(+m[3]||0);
+  return NaN;
+}
+const hms=n=>{n=Math.round(n);return [Math.floor(n/3600),Math.floor(n%3600/60),n%60]};
+const clock=n=>{const [h,m,s]=hms(n);return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0')};
+const isoDur=n=>{const [h,m,s]=hms(n);return 'PT'+(h?h+'H':'')+(m?m+'M':'')+(s||(!h&&!m)?s+'S':'')};
+function chapters(desc){
+  const out=[];
+  (desc||'').split('\n').forEach(l=>{const m=l.match(/^\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2})[\])]?\s*[-\u2013\u2014:|.]?\s*(\S.*)$/);if(m)out.push({t:parseDur(m[1]),name:m[2].trim()})});
+  return out;
+}
+const chaptersOk=c=>c.length>=3&&c[0].t===0&&c.every((x,i)=>!i||x.t-c[i-1].t>=10);
+const tagList=()=>(S.tags||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+const imgSize=u=>new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res(null);i.src=u});
+// The thumbnail is loaded from its address to measure it; TH caches the result for the current URL.
+const TH={url:'',w:0,h:0,st:''};
+function probeThumb(){
+  const u=(S.vthumb||'').trim();if(u===TH.url)return;
+  Object.assign(TH,{url:u,w:0,h:0,st:''});if(!u)return;
+  if(!/^https?:\/\/[^\s]+$/i.test(u)){TH.st='url';return}
+  TH.st='loading';imgSize(u).then(r=>{if(TH.url!==u)return;if(r)Object.assign(TH,r,{st:'ok'});else TH.st='error';render()});
+}
+function buildLD(){
+  const V=parseVideo(S.vurl),du=parseDur(S.vdur),o={'@context':'https://schema.org','@type':'VideoObject'};
+  const put=(k,v)=>{if(v)o[k]=v};
+  put('name',(S.vtitle||'').trim());put('description',(S.vdesc||'').trim());
+  const th=(S.vthumb||'').trim();put('thumbnailUrl',th&&[th]);
+  put('uploadDate',S.vdate);put('duration',du>0&&isoDur(du));
+  if(V&&!V.bad)put('embedUrl',V.embed);
+  put('transcript',(S.vtrans||'').trim());put('keywords',tagList().join(', '));
+  const ch=chapters(S.vdesc);
+  if(V&&!V.bad&&chaptersOk(ch))o.hasPart=ch.map((c,i)=>{const end=i+1<ch.length?ch[i+1].t:du>0?du:0;
+    return Object.assign({'@type':'Clip',name:c.name,startOffset:c.t},end?{endOffset:end}:{},{url:V.at(c.t)})});
+  return '<script type="application/ld+json">\n'+JSON.stringify(o,null,2).replace(/</g,'\\u003c')+'\n</'+'script>';
+}
+
 function analyse(){
   const G=[];const grp=(key,name)=>{const g={key,name,items:[]};G.push(g);return g};
   const add=(g,s,t)=>g.items.push({s,t});
-  const kp=norm(S.kp);const kpWords=kp?kp.split(' ').length:0;
+  const kp=norm(S.kp);const kpWords=kp?kp.split(' ').length:0;const video=S.type==='video';
 
   const gk=grp('kp','Focus keyphrase');
   if(!kp)add(gk,'ok','No focus keyphrase set, so keyword placement is not checked.');
@@ -87,6 +151,72 @@ function analyse(){
     if(kp){const ks=slugify(S.kp).split('-').filter(w=>w.length>2);const ss=norm(sl);if(!ks.length||ks.every(w=>ss.includes(w)))add(gs,'good','Contains the keyphrase words.');else add(gs,'ok','Does not contain all the keyphrase words.')}
   }
 
+  if(video){
+    const gv=grp('video','Video');const f=(s,t,k)=>gv.items.push({s,t,f:k});
+    const V=parseVideo(S.vurl);
+    if(!V)f('bad','Add the YouTube or Vimeo address or embed code.','vurl');
+    else if(V.bad)f('bad',V.provider?'No video ID found in this '+V.provider+' address.':'Only YouTube and Vimeo addresses are recognised.','vurl');
+    else f('good',V.provider+' video '+V.id+' recognised.','vurl');
+    const vt=(S.vtitle||'').trim();
+    if(!vt)f('bad','Add a video title. It becomes the name in the structured data.','vtitle');
+    else{
+      if(vt.length>100)f('bad','The video title is '+vt.length+' characters. YouTube allows 100.','vtitle');
+      else if(vt.length>70)f('ok','The video title is '+vt.length+' characters. Video results cut titles off at about 70.','vtitle');
+      else f('good','Video title length is good: '+vt.length+' characters.','vtitle');
+      if(kp)f(has(vt,kp)?'good':'ok',has(vt,kp)?'The video title contains the keyphrase.':'The video title does not contain the keyphrase.','vtitle');
+    }
+    const vd=(S.vdesc||'').trim();
+    if(!vd)f('bad','Add a video description.','vdesc');
+    else{
+      if(vd.length>5000)f('bad','The video description is '+vd.length+' characters. YouTube allows 5,000.','vdesc');
+      else if(vd.length<100)f('ok','The video description is short ('+vd.length+' characters). Describe what the video shows in two or three sentences.','vdesc');
+      else f('good','Video description length is good: '+vd.length+' characters.','vdesc');
+      if(kp){if(has(vd.slice(0,160),kp))f('good','The keyphrase is in the first 160 characters of the video description.','vdesc');
+        else if(has(vd,kp))f('ok','The keyphrase is in the video description, but not in the first 160 characters, which are the ones shown in results.','vdesc');
+        else f('ok','The video description does not contain the keyphrase.','vdesc')}
+      const ch=chapters(vd);
+      if(chaptersOk(ch))f('good',ch.length+' chapters found. Google can show them as key moments.','vdesc');
+      else if(ch.length)f('ok','Chapter timestamps found, but chapters need at least three, starting at 0:00, each at least 10 seconds long.','vdesc');
+      else f('ok','No chapters. Put timestamps such as "0:00 Introduction" on their own lines so Google can show key moments.','vdesc');
+    }
+    const tu=(S.vthumb||'').trim();
+    if(!tu)f('bad','Add a thumbnail URL. Google needs one to show the video in results.','vthumb');
+    else if(TH.st==='url')f('bad','The thumbnail must be a full address starting with https://.','vthumb');
+    else if(TH.st==='error')f('bad','The thumbnail could not be loaded. Check that the address is correct and public.','vthumb');
+    else if(TH.st==='loading')f('ok','Loading the thumbnail to check its size.','vthumb');
+    else if(TH.st==='ok'){
+      const w=TH.w,h=TH.h;
+      if(w<=120&&h<=90)f('bad',"This is YouTube's placeholder image, so the video has no high-resolution thumbnail. Use hqdefault.jpg or upload a custom thumbnail.",'vthumb');
+      else{
+        if(w>=1280&&h>=720)f('good','Thumbnail size is good: '+w+' x '+h+' px.','vthumb');
+        else if(w>=640)f('ok','The thumbnail is '+w+' x '+h+' px. 1280 x 720 px or larger looks sharper.','vthumb');
+        else f('bad','The thumbnail is too small: '+w+' x '+h+' px. Use at least 1280 x 720 px.','vthumb');
+        const r=w/h;
+        if(Math.abs(r-16/9)<=0.08)f('good','The thumbnail is 16:9.','vthumb');
+        else f('ok','The thumbnail ratio is '+r.toFixed(2)+':1. Video results use 16:9, so it will be cropped or letterboxed.','vthumb');
+      }
+      if(/^http:/i.test(tu))f('ok','Use an https:// address for the thumbnail.','vthumb');
+    }
+    const dt=(S.vdate||'').trim();
+    if(!dt)f('bad','Add the upload date. Google requires it.','vdate');
+    else if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)||isNaN(Date.parse(dt)))f('bad','Write the upload date as YYYY-MM-DD.','vdate');
+    else if(dt>new Date().toISOString().slice(0,10))f('bad','The upload date is in the future.','vdate');
+    else f('good','Upload date is set ('+dt+').','vdate');
+    const du=parseDur(S.vdur);
+    if(du===null)f('ok','Add the duration so results can show how long the video is.','vdur');
+    else if(!(du>0))f('bad','Write the duration as 4:35, 1:02:03 or PT4M35S.','vdur');
+    else f('good','Duration: '+clock(du)+' ('+isoDur(du)+').','vdur');
+    f(S.vcap?'good':'ok',S.vcap?'Captions or subtitles are available.':'Captions are not marked as available. They help deaf viewers and people watching without sound.','vcap');
+
+    const gtr=grp('vtrans','Transcript');const tr=(S.vtrans||'').trim(),trw=words(tr).length;
+    if(!tr)add(gtr,'bad','Add a transcript. It makes what is said in the video searchable and accessible.');
+    else{
+      if(trw<50)add(gtr,'ok','The transcript is short ('+trw+' words). Include everything that is said.');
+      else add(gtr,'good','Transcript: '+trw+' words.');
+      if(kp)add(gtr,has(tr,kp)?'good':'ok',has(tr,kp)?'The transcript contains the keyphrase.':'The transcript does not contain the keyphrase.');
+    }
+  }
+
   const gb=grp('body','Content');
   const raw=S.body||'';const txt=bodyText(raw);
   const lines=txt.split('\n');
@@ -94,16 +224,20 @@ function analyse(){
   const plain=lines.filter(l=>!/^\s*#{1,6}\s/.test(l)).join('\n');
   const paras=plain.split(/\n\s*\n/).map(p=>p.trim()).filter(p=>words(p).length);
   const wc=words(txt.replace(/^\s*#+\s*/gm,'')).length;
-  if(!wc)add(gb,'bad','Add body text to check the content.');
+  // On a video page the transcript counts towards the length of the page.
+  const twc=video?words(S.vtrans).length:0,tot=wc+twc,inc=twc?' including the transcript':'';
+  if(tot){
+    if(tot>=300)add(gb,'good','Length is good: '+tot+' words'+inc+'.');
+    else if(tot>=150)add(gb,'ok','Fairly short: '+tot+' words'+inc+'. 300 or more is better for search.');
+    else add(gb,'bad','Thin content: '+tot+' words'+inc+'. Aim for at least 300.');
+  }
+  if(!wc)add(gb,video?'ok':'bad',video?'Add a short introduction around the video. Text on the page helps search engines understand it.':'Add body text to check the content.');
   else{
-    if(wc>=300)add(gb,'good','Length is good: '+wc+' words.');
-    else if(wc>=150)add(gb,'ok','Fairly short: '+wc+' words. 300 or more is better for search.');
-    else add(gb,'bad','Thin content: '+wc+' words. Aim for at least 300.');
     if(kp){
       const first=paras[0]||'';
       if(has(first,kp))add(gb,'good','The keyphrase appears in the first paragraph.');
       else add(gb,'bad','The keyphrase does not appear in the first paragraph.');
-      const occ=count(txt,kp);const dens=occ*kpWords/wc*100;
+      const occ=count(txt+(twc?'\n'+S.vtrans:''),kp);const dens=occ*kpWords/tot*100;
       if(occ===0)add(gb,'bad','The keyphrase does not appear in the body.');
       else if(dens<0.5)add(gb,'ok','Keyphrase density is low: '+dens.toFixed(1)+'% ('+occ+(occ>1?' times':' time')+'). Aim for 0.5% to 3%.');
       else if(dens<=3)add(gb,'good','Keyphrase density is good: '+dens.toFixed(1)+'% ('+occ+(occ>1?' times':' time')+').');
@@ -128,7 +262,8 @@ function analyse(){
 
   const gi=grp('image','Featured image');
   const im=S.img;
-  if(!im)add(gi,'bad','Add a featured image. Social platforms use it when the page is shared.');
+  if(!im&&video&&TH.st==='ok')add(gi,'ok','No featured image. Set the video thumbnail as og:image so shares show it.');
+  else if(!im)add(gi,'bad','Add a featured image. Social platforms use it when the page is shared.');
   else{
     if(im.w&&im.h){
       if(im.w>=1200&&im.h>=630)add(gi,'good','Size is good: '+im.w+' x '+im.h+' px.');
@@ -146,7 +281,8 @@ function analyse(){
     if(im.type&&!/(jpe?g|png|webp|avif)/i.test(im.type))add(gi,'ok','Format is '+im.type+'. JPEG, PNG or WebP are safest.');
   }
   const alt=(S.alt||'').trim();
-  if(!alt)add(gi,'bad','Add alt text for the image.');
+  if(!im&&video){}
+  else if(!alt)add(gi,'bad','Add alt text for the image.');
   else{
     if(alt.length>125)add(gi,'ok','Alt text is long ('+alt.length+' characters). Screen readers handle 125 or fewer best.');
     else add(gi,'good','Alt text is present.');
@@ -154,7 +290,7 @@ function analyse(){
   }
 
   const gg=grp('tags','Tags / keywords');
-  const tags=(S.tags||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+  const tags=tagList();
   if(!tags.length)add(gg,'ok','No tags. Three to eight relevant tags help related-content and site search.');
   else{
     if(tags.length<3)add(gg,'ok','Only '+tags.length+' tag'+(tags.length>1?'s':'')+'. Three to eight is a good range.');
@@ -181,6 +317,13 @@ function analyse(){
     add(gx,x.viewport?'good':'bad',x.viewport?'Viewport tag is set.':'No viewport tag.');
     if(x.noAlt)add(gx,'ok',x.noAlt+' content image'+(x.noAlt>1?'s have':' has')+' no alt attribute.');
     else add(gx,'good','All content images have an alt attribute.');
+    if(video&&x.video){const v=x.video;
+      if(!v.ld)add(gx,'bad','No VideoObject structured data. Copy the JSON-LD under the checks into the page.');
+      else if(v.missing.length)add(gx,'bad','The VideoObject structured data is missing '+v.missing.join(', ')+'.');
+      else add(gx,'good','VideoObject structured data has the required properties.');
+      add(gx,v.embed?'good':'ok',v.embed?'The video is embedded in the page.':'No YouTube or Vimeo embed found in the source. It may be added by a script.');
+      add(gx,v.og?'good':'ok',v.og?'og:video tag is set.':'No og:video tag. Some platforms use it to play the video in the post.');
+    }
   }
   return G;
 }
@@ -189,7 +332,8 @@ const RANK={bad:0,ok:1,good:2};const LABEL={good:'Good',ok:'Medium',bad:'Bad'};
 const worst=items=>items.reduce((w,i)=>RANK[i.s]<RANK[w]?i.s:w,'good');
 
 function render(){
-  const G=analyse();
+  probeThumb();
+  const G=analyse();const video=S.type==='video';
   const all=G.flatMap(g=>g.items);
   const n={good:0,ok:0,bad:0};all.forEach(i=>n[i.s]++);
   const pct=all.length?Math.round((n.good+n.ok*0.5)/all.length*100):0;
@@ -205,7 +349,9 @@ function render(){
     return '<div class="group"><h3><span class="dot '+w+'"></span>'+esc(g.name)+'</h3><ul>'+
       items.map(i=>'<li><span class="tag '+i.s+'">'+LABEL[i.s]+'</span><span>'+esc(i.t)+'</span></li>').join('')+'</ul></div>'}).join('');
 
-  const status={};G.forEach(g=>status[g.key]=worst(g.items));
+  const status={},byField={};
+  G.forEach(g=>{status[g.key]=worst(g.items);g.items.forEach(i=>{if(i.f)(byField[i.f]=byField[i.f]||[]).push(i)})});
+  Object.keys(byField).forEach(k=>{status[k]=worst(byField[k])});
   document.querySelectorAll('.dot[data-g]').forEach(el=>{const s=status[el.dataset.g];el.className='dot'+(s?' '+s:'')});
 
   const t=(S.title||'').trim(),tw=px(t,TF);
@@ -216,15 +362,29 @@ function render(){
   const db=$('descBar');db.style.width=Math.min(dl/158,1)*100+'%';db.className=!d?'':(dl>=120&&dl<=158)?'good':(dl>=70&&dl<=170)?'ok':'bad';
   const wc=words(bodyText(S.body||'').replace(/^\s*#+\s*/gm,'')).length;
   $('bodyHint').textContent=wc?wc+' words':'';
+  const vt=(S.vtitle||'').trim(),vd=(S.vdesc||'').trim(),trw=words(S.vtrans).length,du=parseDur(S.vdur);
+  $('vtitleHint').textContent=vt?vt.length+' of 100 characters':'';
+  $('vdescHint').textContent=vd?vd.length+' characters':'';
+  $('vtransHint').textContent=trw?trw+' words':'';
+  const thumbOk=video&&TH.st==='ok',durTag=du>0?'<span class="dur">'+clock(du)+'</span>':'';
+  const vp=$('vprev');
+  if(TH.st==='ok')vp.innerHTML='<img alt="" src="'+esc(TH.url)+'">'+durTag;else vp.textContent=TH.st==='loading'?'Loading':TH.st?'No image':'None';
+  const V=parseVideo(S.vurl);
+  $('vthumbInfo').textContent=[V&&!V.bad?V.provider+' '+V.id:'',TH.st==='ok'?TH.w+' x '+TH.h+' px':''].filter(Boolean).join(', ');
+  if(video)$('ld').textContent=buildLD();
 
   const dom=cleanDomain(S.domain)||'example.org';
   const sl=(S.slug||'').trim().replace(/^https?:\/\/[^\/]+/,'').replace(/^\/+|\/+$/g,'');
+  $('serp').className='serp'+(thumbOk?' has-vid':'');
   $('serp').innerHTML='<div class="serp-site"><span class="fav"></span><div><div class="serp-name">'+esc(dom)+'</div><div class="serp-url">https://'+esc(dom)+(sl?' \u203A '+esc(sl.split('/').join(' \u203A ')):'')+'</div></div></div>'+
-    '<div class="serp-title">'+esc(t?cut(t,TF,TMAX):'Your SEO title appears here')+'</div>'+
-    '<div class="serp-desc">'+esc(d?cut(d,DF,DMAX):'Your meta description appears here.')+'</div>';
+    '<div class="serp-body"><div><div class="serp-title">'+esc(t?cut(t,TF,TMAX):'Your SEO title appears here')+'</div>'+
+    '<div class="serp-desc">'+esc(d?cut(d,DF,DMAX):'Your meta description appears here.')+'</div>'+
+    (video&&V&&!V.bad?'<div class="serp-meta">'+esc([V.provider,S.vdate].filter(Boolean).join(' \u00B7 '))+'</div>':'')+'</div>'+
+    (thumbOk?'<div class="serp-vid"><img alt="" src="'+esc(TH.url)+'">'+durTag+'</div>':'')+'</div>';
 
   const im=S.img;let imgHtml;
   if(im&&im.src)imgHtml='<div class="img has"><img alt="" src="'+esc(im.src)+'"></div>';
+  else if(!im&&thumbOk)imgHtml='<div class="img has"><img alt="" src="'+esc(TH.url)+'"><span class="play"></span></div>';
   else if(im&&im.remote)imgHtml='<div class="img">Image set in page source:<br>'+esc(im.remote.split('/').pop())+'</div>';
   else imgHtml='<div class="img">No image</div>';
   $('social').innerHTML=imgHtml+'<div class="txt"><div class="d">'+esc(dom)+'</div><div class="t">'+esc(t||'Title')+'</div><div class="s">'+esc(d||'Description')+'</div></div>';
@@ -236,7 +396,38 @@ function render(){
 }
 
 let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{save();render()},120)};
-TEXT.forEach(k=>{const el=$(k);el.value=S[k]||'';el.addEventListener('input',()=>{S[k]=el.value;if(k==='domain')markLinks();schedule()})});
+TEXT.forEach(k=>{const el=$(k);el.addEventListener('input',()=>{S[k]=el.value;if(k==='domain')markLinks();schedule()})});
+const radios=document.querySelectorAll('input[name=ptype]');
+function syncFields(){
+  TEXT.forEach(k=>{$(k).value=S[k]||''});$('vcap').checked=!!S.vcap;
+  radios.forEach(r=>{r.checked=r.value===S.type});document.body.classList.toggle('is-video',S.type==='video');
+}
+syncFields();
+radios.forEach(r=>r.addEventListener('change',()=>{if(r.checked){S.type=r.value;syncFields();save();render()}}));
+$('vcap').addEventListener('change',e=>{S.vcap=e.target.checked;schedule()});
+$('vfetch').addEventListener('click',async()=>{
+  const V=parseVideo(S.vurl),msg=$('vmsg');
+  if(!V||V.bad){msg.textContent='Enter a YouTube or Vimeo address first.';return}
+  msg.textContent='Fetching details from '+V.provider+'.';
+  try{
+    const ep=V.provider==='YouTube'?'https://www.youtube.com/oembed?format=json&url=':'https://vimeo.com/api/oembed.json?width=1280&url=';
+    const r=await fetch(ep+encodeURIComponent(V.watch));if(!r.ok)throw new Error(r.status);
+    const j=await r.json(),filled=[];
+    const fill=(k,v,label)=>{if(v&&!String(S[k]||'').trim()){S[k]=String(v);filled.push(label)}};
+    fill('vtitle',j.title,'title');fill('vdesc',j.description,'description');
+    fill('vdur',j.duration&&clock(j.duration),'duration');fill('vdate',j.upload_date&&String(j.upload_date).slice(0,10),'upload date');
+    let th=j.thumbnail_url||'';
+    if(V.provider==='YouTube'){const big='https://i.ytimg.com/vi/'+V.id+'/maxresdefault.jpg',sz=await imgSize(big);th=sz&&sz.w>120?big:'https://i.ytimg.com/vi/'+V.id+'/hqdefault.jpg'}
+    else th=th.replace(/-d_\d+(x\d+)?/,'-d_1280x720');
+    fill('vthumb',th,'thumbnail');
+    syncFields();save();render();
+    msg.textContent=(filled.length?'Filled: '+filled.join(', ')+'.':'No empty fields to fill.')+(V.provider==='YouTube'?' YouTube does not share the description, date or duration without an API key, so copy them from YouTube Studio.':'');
+  }catch(e){msg.textContent='Could not fetch the details. The video may be private, or the request was blocked.'}
+});
+$('ldCopy').addEventListener('click',async()=>{
+  let ok=false;try{await navigator.clipboard.writeText(buildLD());ok=true}catch(e){}
+  $('ldMsg').textContent=ok?'JSON-LD copied.':'Copy failed. Select the code and copy it.';setTimeout(()=>{$('ldMsg').textContent=''},2500);
+});
 
 const ed=$('bodyEditor'),htmlBox=$('bodyHtml'),wrap=$('rteWrap');
 try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
@@ -396,6 +587,13 @@ $('imgFile').addEventListener('change',e=>{
   r.readAsDataURL(f);
 });
 
+function findVideoLD(doc){
+  let found=null;
+  const walk=o=>{if(found||!o||typeof o!=='object')return;if(Array.isArray(o)){o.forEach(walk);return}
+    if([].concat(o['@type']).includes('VideoObject')){found=o;return}Object.values(o).forEach(walk)};
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{try{walk(JSON.parse(s.textContent))}catch(e){}});
+  return found;
+}
 $('importBtn').addEventListener('click',()=>{
   const html=$('src').value;const msg=$('importMsg');
   if(!/<(html|head|meta|title|body)/i.test(html)){msg.textContent='This does not look like an HTML page source.';return}
@@ -404,7 +602,7 @@ $('importBtn').addEventListener('click',()=>{
   const canonical=(doc.querySelector('link[rel="canonical"]')||{getAttribute:()=>''}).getAttribute('href')||'';
   const pageUrl=canonical||meta('meta[property="og:url"]');
   let host='',path='';try{if(pageUrl){const u=new URL(pageUrl,'https://x.invalid');if(u.hostname!=='x.invalid')host=u.hostname.replace(/^www\./,'');path=u.pathname.replace(/^\/+/,'')}}catch(e){}
-  Object.assign(S,{tags:'',alt:'',img:null});
+  Object.assign(S,{tags:'',alt:'',img:null,vurl:'',vtitle:'',vdesc:'',vthumb:'',vdate:'',vdur:'',vtrans:'',vcap:false});
   S.title=((doc.querySelector('title')||{}).textContent||meta('meta[property="og:title"]')).trim();
   S.desc=meta('meta[name="description"]')||meta('meta[property="og:description"]');
   if(host)S.domain=host;if(path)S.slug=path;
@@ -421,8 +619,20 @@ $('importBtn').addEventListener('click',()=>{
   S.tech={h1:doc.querySelectorAll('h1').length,canonical:!!canonical,ogTitle:!!meta('meta[property="og:title"]'),ogDesc:!!meta('meta[property="og:description"]'),ogImage:!!meta('meta[property="og:image"]'),
     twitter:!!meta('meta[name="twitter:card"]'),lang:doc.documentElement.getAttribute('lang')||'',hreflang:doc.querySelectorAll('link[rel="alternate"][hreflang]').length,
     robots:meta('meta[name="robots"]'),viewport:!!doc.querySelector('meta[name="viewport"]'),noAlt:[...root.querySelectorAll('img')].filter(i=>!i.hasAttribute('alt')).length};
-  TEXT.forEach(k=>{$(k).value=S[k]||''});
-  msg.textContent='Fields filled from the source. Set the focus keyphrase to complete the checks.';
+  const ld=findVideoLD(doc),str=v=>typeof v==='string'?v.trim():'';
+  const ifr=[...doc.querySelectorAll('iframe')].map(i=>i.getAttribute('src')||i.getAttribute('data-src')||'').find(u=>/youtube(-nocookie)?\.com|youtu\.be|vimeo\.com/i.test(u))||'';
+  const ogv=meta('meta[property="og:video"]')||meta('meta[property="og:video:secure_url"]')||meta('meta[property="og:video:url"]');
+  S.type=ld||ifr?'video':'article';
+  if(ld||ifr)S.vurl=ifr||str(ld.embedUrl)||str(ld.contentUrl)||ogv;
+  if(ld){
+    const th=[].concat(ld.thumbnailUrl||ld.thumbnail||[])[0];
+    const du=parseDur(str(ld.duration));
+    Object.assign(S,{vtitle:str(ld.name),vdesc:str(ld.description),vthumb:th&&typeof th==='object'?str(th.url||th.contentUrl):str(th),
+      vdate:str(ld.uploadDate).slice(0,10),vdur:du>0?clock(du):'',vtrans:str(ld.transcript)});
+  }
+  S.tech.video={ld:!!ld,missing:ld?['name','thumbnailUrl','uploadDate'].filter(k=>!ld[k]):[],embed:!!ifr,og:!!ogv};
+  syncFields();
+  msg.textContent=(S.type==='video'?'Video page detected. ':'')+'Fields filled from the source. Set the focus keyphrase to complete the checks.';
   save();render();
 });
 
@@ -434,10 +644,18 @@ const EXAMPLE={kp:'rainwater harvesting',title:'Rainwater harvesting: a practica
   '<h2>Choosing a tank</h2>\n<p>Size the tank to cover the longest dry spell you expect, not the whole year. Plastic tanks are light and easy to install. Ferro-cement tanks cost less per litre and last longer, but they take more work to build. See our <a href="/guides/water-storage-tanks">guide to water storage tanks</a> for a comparison.</p>\n'+
   '<h2>Keeping the water clean</h2>\n<ul>\n  <li>Fit a first-flush diverter so the dirtiest water from the roof is not stored.</li>\n  <li>Cover every opening with mesh to keep out insects and leaves.</li>\n  <li>Clean gutters before the rainy season starts.</li>\n</ul>\n'+
   '<p>Rainwater harvesting works best as part of a wider plan that includes mulching, drip irrigation and drought-tolerant crops. Start small, measure how much you collect in the first season, and expand from there.</p>'};
-$('exampleBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,EXAMPLE);setEditor(S.body);TEXT.forEach(k=>{$(k).value=S[k]||''});$('imgFile').value='';
+const VEXAMPLE={type:'video',kp:'big buck bunny',title:'Big Buck Bunny: watch the Blender Foundation open movie',domain:'example.org',slug:'films/big-buck-bunny',
+  desc:'Watch Big Buck Bunny, the free animated short from the Blender Foundation. A giant rabbit takes comic revenge on three rodents in ten minutes.',
+  tags:'big buck bunny, animation, open movie, blender',vurl:'https://vimeo.com/1084537',vtitle:'Big Buck Bunny',
+  vdesc:'Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When three rodents rudely harass him one sunny day, he prepares them a comical revenge.\n\n0:00 Opening titles\n0:45 A sunny morning\n2:40 The rodents strike\n5:30 Bunny plans his revenge\n8:10 Credits',
+  vthumb:'https://i.vimeocdn.com/video/20963649-f02817456fc48e7c317ef4c07ba259cd4b40a3649bd8eb50a4418b59ec3f5af5-d_1280x720',vdate:'2008-05-29',vdur:'9:57',vcap:false,
+  vtrans:'The film has no dialogue. This transcript describes what happens on screen. A bird wakes up in a tree on a sunny morning in the forest. Big Buck Bunny, a large and gentle rabbit, crawls out of his burrow and stretches in the sun. He admires a butterfly and smiles at the flowers. Three rodents, Frank, Rinky and Gimera, watch him from a tree and start throwing fruit at him. When they kill a butterfly he was enjoying, Bunny decides to fight back. He carves a bow and sharpens sticks, sets a series of traps in the forest, and waits. One by one the rodents fall into his traps. In the end Bunny flies Frank on a kite string, and the butterfly returns.',
+  body:'<p>Big Buck Bunny is a short animated film made by the Blender Foundation with free and open source software. It was released in 2008 under a Creative Commons licence, so anyone can watch, share and reuse it.</p>\n'+
+  '<p>Watch the full film above, or read the transcript for a description of each scene. The <a href="https://peach.blender.org/">official Big Buck Bunny site</a> has the production files. See our <a href="/films">list of open movies</a> for more.</p>'};
+$('exampleBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,S.type==='video'?VEXAMPLE:EXAMPLE);setEditor(S.body);syncFields();$('imgFile').value='';
   $('importMsg').textContent='Example loaded. Edit any field to see the checks change.';save();render()});
 
-$('clearBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,{domain:S.domain||''});setEditor('');TEXT.forEach(k=>{$(k).value=S[k]||''});$('imgFile').value='';$('src').value='';$('importMsg').textContent='';save();render()});
+$('clearBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,{domain:S.domain||'',type:S.type});setEditor('');syncFields();$('imgFile').value='';$('src').value='';$('importMsg').textContent='';save();render()});
 
 render();
 })();

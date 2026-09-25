@@ -22,7 +22,7 @@
 <body>
 <header class="top"><div class="wrap">
   <h1>SEO page check</h1>
-  <p>Fill in the fields, or import a page's HTML source. Each check is rated good, medium or bad and updates as you type.</p>
+  <p>Fill in the fields, or import a page's HTML source. Works for articles and video pages (YouTube or Vimeo). Each check is rated good, medium or bad and updates as you type.</p>
 </div></header>
 
 <main class="wrap grid">
@@ -46,6 +46,13 @@
 
   <div class="panel">
     <div class="field">
+      <span class="lbl">Page type</span>
+      <div class="seg" role="radiogroup" aria-label="Page type">
+        <label><input type="radio" name="ptype" value="article" checked> Article</label>
+        <label><input type="radio" name="ptype" value="video"> Video page</label>
+      </div>
+    </div>
+    <div class="field">
       <label class="lbl" for="kp"><span class="dot" data-g="kp"></span>Focus keyphrase</label>
       <input type="text" id="kp" placeholder="e.g. climate finance">
     </div>
@@ -68,6 +75,49 @@
       <label class="lbl" for="desc"><span class="dot" data-g="desc"></span>Meta description / excerpt <span class="hint" id="descHint"></span></label>
       <textarea id="desc"></textarea>
       <div class="meter"><span id="descBar"></span></div>
+    </div>
+    <div class="video-only vbox">
+      <h2>Video</h2>
+      <div class="field">
+        <label class="lbl" for="vurl"><span class="dot" data-g="vurl"></span>YouTube or Vimeo address <span class="hint">or paste the embed code</span></label>
+        <div class="inline">
+          <input type="text" id="vurl" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
+          <button type="button" id="vfetch" title="Fill empty video fields from YouTube or Vimeo">Fetch details</button>
+        </div>
+        <p class="small" id="vmsg"></p>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vtitle"><span class="dot" data-g="vtitle"></span>Video title <span class="hint" id="vtitleHint"></span></label>
+        <input type="text" id="vtitle">
+      </div>
+      <div class="field">
+        <label class="lbl" for="vdesc"><span class="dot" data-g="vdesc"></span>Video description <span class="hint" id="vdescHint"></span></label>
+        <textarea id="vdesc" placeholder="What the video shows. Add chapters on their own lines:&#10;0:00 Introduction&#10;1:15 First topic"></textarea>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vthumb"><span class="dot" data-g="vthumb"></span>Thumbnail URL</label>
+        <div class="drop">
+          <div class="thumb vthumb" id="vprev">None</div>
+          <div class="info"><input type="text" id="vthumb" placeholder="https://..."><div id="vthumbInfo"></div></div>
+        </div>
+      </div>
+      <div class="row2 field">
+        <div>
+          <label class="lbl" for="vdate"><span class="dot" data-g="vdate"></span>Upload date</label>
+          <input type="date" id="vdate">
+        </div>
+        <div>
+          <label class="lbl" for="vdur"><span class="dot" data-g="vdur"></span>Duration</label>
+          <input type="text" id="vdur" placeholder="4:35">
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vtrans"><span class="dot" data-g="vtrans"></span>Transcript <span class="hint" id="vtransHint"></span></label>
+        <textarea id="vtrans" class="tall" placeholder="Everything that is said in the video"></textarea>
+      </div>
+      <div class="field">
+        <label class="check"><span class="dot" data-g="vcap"></span><input type="checkbox" id="vcap"> Captions or subtitles are available</label>
+      </div>
     </div>
     <div class="field">
       <label class="lbl" id="bodyLbl"><span class="dot" data-g="body"></span>Body text <span class="hint" id="bodyHint"></span></label>
@@ -135,11 +185,17 @@
     <div class="panel pv"><h2>Social share preview</h2><div class="social" id="social"></div></div>
   </div>
   <div class="panel groups"><h2>Checks</h2><div id="groups"></div></div>
+  <div class="panel video-only ldbox">
+    <h2>Video structured data</h2>
+    <p class="small">Add this to the page so Google can show the video in results. Check it with the <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">Rich Results Test</a>.</p>
+    <pre id="ld"></pre>
+    <div class="btns"><button type="button" id="ldCopy">Copy JSON-LD</button><span id="ldMsg" class="small"></span></div>
+  </div>
 </aside>
 </main>
 
 <footer class="foot"><div class="wrap">
-  <p>Everything runs in your browser. Nothing you type or import is sent anywhere; your last draft is kept in this browser's local storage.</p>
+  <p>Everything runs in your browser. Nothing you type or import is sent anywhere; your last draft is kept in this browser's local storage. On video pages, the thumbnail is loaded from its address, and "Fetch details" asks YouTube or Vimeo for the video's public details.</p>
   <p>&copy; 2026 Simon Adjatan &middot; <a href="https://github.com/Thecoolsim/SEO-page-check">Source on GitHub</a> &middot; MIT License</p>
 </div></footer>
 
