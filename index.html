@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SEO page check</title>
+<meta name="description" content="Check a web page's SEO in your browser: title, meta description, URL, content, keyphrase, links, featured image and tags, with Google and social previews.">
+<meta name="author" content="Simon Adjatan">
+<meta name="theme-color" content="#0f5c63">
+<link rel="canonical" href="https://thecoolsim.github.io/SEO-page-check/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SEO page check">
+<meta property="og:description" content="Check a page's title, description, URL, content, links and images, with live Google and social previews. Runs in your browser.">
+<meta property="og:url" content="https://thecoolsim.github.io/SEO-page-check/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f5c63'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='M19 19l6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="seo-page-check.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1>SEO page check</h1>
+  <p>Fill in the fields, or import a page's HTML source. Each check is rated good, medium or bad and updates as you type.</p>
+</div></header>
+
+<main class="wrap grid">
+<section class="form">
+  <div class="panel">
+    <details id="importBox">
+      <summary>Import from a page's source</summary>
+      <ol>
+        <li>Open the page in your browser.</li>
+        <li>Open the source: Ctrl+U on Windows or Linux, Cmd+Option+U on a Mac (in Safari, turn on the Develop menu first).</li>
+        <li>Select all, copy, and paste below.</li>
+      </ol>
+      <textarea id="src" placeholder="Paste the full HTML source here"></textarea>
+      <div class="btns">
+        <button id="importBtn" type="button">Read source</button>
+        <button id="exampleBtn" type="button" class="ghost">Load an example</button>
+        <span id="importMsg" class="small"></span>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <div class="field">
+      <label class="lbl" for="kp"><span class="dot" data-g="kp"></span>Focus keyphrase</label>
+      <input type="text" id="kp" placeholder="e.g. climate finance">
+    </div>
+    <div class="field">
+      <label class="lbl" for="title"><span class="dot" data-g="title"></span>SEO title <span class="hint" id="titleHint"></span></label>
+      <input type="text" id="title">
+      <div class="meter"><span id="titleBar"></span></div>
+    </div>
+    <div class="row2 field">
+      <div>
+        <label class="lbl" for="domain"><span class="dot"></span>Site domain</label>
+        <input type="text" id="domain" placeholder="example.org">
+      </div>
+      <div>
+        <label class="lbl" for="slug"><span class="dot" data-g="slug"></span>URL slug</label>
+        <input type="text" id="slug" placeholder="en/news/example-page">
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="desc"><span class="dot" data-g="desc"></span>Meta description / excerpt <span class="hint" id="descHint"></span></label>
+      <textarea id="desc"></textarea>
+      <div class="meter"><span id="descBar"></span></div>
+    </div>
+    <div class="field">
+      <label class="lbl" id="bodyLbl"><span class="dot" data-g="body"></span>Body text <span class="hint" id="bodyHint"></span></label>
+      <div class="rte-wrap" id="rteWrap">
+        <div class="rte-bar" role="toolbar" aria-label="Body formatting">
+          <select id="blockSel" class="fmt" aria-label="Text style" title="Text style">
+            <option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="h4">Heading 4</option><option value="blockquote">Quote</option>
+          </select>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" data-cmd="bold" title="Bold (Ctrl/Cmd+B)" aria-pressed="false"><b>B</b></button>
+          <button type="button" class="fmt" data-cmd="italic" title="Italic (Ctrl/Cmd+I)" aria-pressed="false"><i>I</i></button>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" data-cmd="insertUnorderedList" title="Bulleted list" aria-pressed="false">Bullets</button>
+          <button type="button" class="fmt" data-cmd="insertOrderedList" title="Numbered list" aria-pressed="false">Numbers</button>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" id="btnInt" title="Internal link">Internal link</button>
+          <button type="button" class="fmt" id="btnExt" title="External link (Ctrl/Cmd+K)">External link</button>
+          <button type="button" class="fmt" id="btnUnlink" title="Remove link">Unlink</button>
+          <button type="button" class="fmt" id="btnClean" title="Remove bold, italic and stray formatting">Clear format</button>
+          <span class="push"></span>
+          <button type="button" id="btnHtml" aria-pressed="false" title="Show or edit the HTML">HTML</button>
+          <button type="button" id="btnCopy" title="Copy clean HTML">Copy HTML</button>
+        </div>
+        <div class="rte-link" id="linkPanel" role="group" aria-label="Link">
+          <strong id="linkLabel">Internal link</strong>
+          <input type="text" id="linkUrl" aria-label="Link address">
+          <label><input type="checkbox" id="linkBlank"> Open in new tab</label>
+          <button type="button" id="linkApply">Apply</button>
+          <button type="button" class="ghost" id="linkCancel">Cancel</button>
+          <span class="note" id="linkNote"></span>
+        </div>
+        <div class="rte" id="bodyEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Write or paste the body text. Formatting from Word or a web page is cleaned automatically."></div>
+        <textarea id="bodyHtml" aria-label="Body HTML" spellcheck="false"></textarea>
+      </div>
+      <div class="rte-foot"><span class="k ki"><i></i>Internal link</span><span class="k ke"><i></i>External link</span><span id="linkCounts"></span><span id="copyMsg"></span></div>
+    </div>
+    <div class="field">
+      <label class="lbl"><span class="dot" data-g="image"></span>Featured image</label>
+      <div class="drop">
+        <div class="thumb" id="thumb">None</div>
+        <div class="info">
+          <input type="file" id="imgFile" accept="image/*" aria-label="Choose featured image">
+          <div id="imgInfo"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="alt"><span class="dot" data-g="image"></span>Image alt text</label>
+      <input type="text" id="alt">
+    </div>
+    <div class="field">
+      <label class="lbl" for="tags"><span class="dot" data-g="tags"></span>Tags / keywords <span class="hint">separate with commas</span></label>
+      <input type="text" id="tags" placeholder="climate, adaptation, finance">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="clearBtn">Clear all fields</button>
+    </div>
+  </div>
+</section>
+
+<aside class="results">
+  <div class="verdict" id="verdict"></div>
+  <div class="previews">
+    <div class="panel pv"><h2>Google result preview</h2><div class="serp" id="serp"></div></div>
+    <div class="panel pv"><h2>Social share preview</h2><div class="social" id="social"></div></div>
+  </div>
+  <div class="panel groups"><h2>Checks</h2><div id="groups"></div></div>
+</aside>
+</main>
+
+<footer class="foot"><div class="wrap">
+  <p>Everything runs in your browser. Nothing you type or import is sent anywhere; your last draft is kept in this browser's local storage.</p>
+  <p>&copy; 2026 Simon Adjatan &middot; <a href="https://github.com/Thecoolsim/SEO-page-check">Source on GitHub</a> &middot; MIT License</p>
+</div></footer>
+
+<script src="seo-page-check.js"></script>
+</body>
+</html>
