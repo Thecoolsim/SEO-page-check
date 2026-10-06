@@ -2,7 +2,7 @@
 
 A single-page tool for checking a web page's on-page SEO before you publish it, for both articles and video pages (YouTube or Vimeo). Fill in the fields, or paste a page's HTML source, and every check is rated **good**, **medium** or **bad** as you type, with live Google and social-share previews.
 
-**[Try it online](https://thecoolsim.github.io/SEO-page-check/)**
+**[Try it online](https://thecoolsim.github.io/SEO-page-check/)** · **[Version française](https://thecoolsim.github.io/SEO-page-check/fr/)**
 
 ![SEO page check screenshot](docs/screenshot.png)
 
@@ -18,6 +18,7 @@ A single-page tool for checking a web page's on-page SEO before you publish it, 
 - **Video pages**: checks the video address, title, description, chapters, thumbnail, upload date, duration, transcript and captions, and generates `VideoObject` structured data (JSON-LD) to paste into the page
 - "Load an example" button for a quick demo (an article or a video page, depending on the page type)
 - Light and dark themes (follows the system setting)
+- **French version** in [`fr/`](fr/) with a French interface and French SEO rules (see [French version](#french-version))
 
 ## Privacy
 
@@ -70,6 +71,28 @@ The score counts good checks as 1 and medium checks as 0.5, divided by the numbe
 
 These thresholds are common SEO guidelines (similar to the ones Yoast and Rank Math use), not official Google rules. Treat the results as a writing checklist, not a ranking guarantee.
 
+## French version
+
+The French page at [`/fr/`](https://thecoolsim.github.io/SEO-page-check/fr/) uses the same engine with French messages and these French rules:
+
+| Rule | French version | Why |
+|---|---|---|
+| Title and description length | Same as English: ≤ 600 px for titles, 120–158 characters for descriptions | Google truncates by pixel width, not by language. French words are longer, so the same width holds fewer words. |
+| Keyphrase length | 1–4 **content words**; function words (*de*, *la*, *pour*, *l’*…) are not counted | French keyphrases naturally contain function words. Yoast SEO counts content words only for French. |
+| Keyphrase density | Counts content words only | Otherwise "récupération d’eau de pluie" counts as 4 words and looks like keyword stuffing. |
+| Keyphrase matching | Straight (`'`) and curly (`’`) apostrophes are treated the same | French text uses both. |
+| URL | Keyphrase words must appear, except function words; a hint suggests removing function words (`la`, `de`, `pour`…) from the slug | Shorter, cleaner French URLs |
+| Sentence length | ≤ 20 words, with at most 25% of sentences over it | Same limit as Yoast SEO for French |
+| Reading ease | Flesch reading ease adapted to French by Kandel and Moles: 207 − 1.015 × (words per sentence) − 73.6 × (syllables per word). 60 or more is good. Syllables are estimated. | The French formula used by Yoast SEO |
+| Transition words | At least 30% of sentences contain a French transition word (*cependant*, *ainsi*, *en effet*, *par conséquent*…) | Same threshold as Yoast SEO |
+| Typography | Flags a missing space before `:` `;` `!` `?` and inside `« »` in the title, description and video title. Times (`10:30`) and URLs are ignored. | French typographic rules |
+
+Numbers, dates and file sizes use French formats (`3,2 %`, `29/05/2008`, `250 Ko`), and the messages use non-breaking spaces before `:` and `%`. The French page keeps its own draft in the browser, separate from the English one. The two pages link to each other with `hreflang` alternates.
+
+### Adding a language
+
+Copy `fr/` to a new folder, translate `index.html`, and adapt the language file. It sets `window.SEO_PAGE_CHECK_LANG` to `{rules, msgs, examples}` before `seo-page-check.js` loads. Any message left out falls back to English. The rules are `storageKey`, `stopwords`, `typography`, `readability` (`base`, `perWord`, `perSyllable`), `transitions` and `sentenceMax`.
+
 ## Usage
 
 ### Online
@@ -99,10 +122,12 @@ The body is taken from the first match of a Drupal body field, `article`, `main`
 
 | File | Description |
 |---|---|
-| `index.html` | Page markup |
-| `seo-page-check.css` | Styles, including light and dark themes |
-| `seo-page-check.js` | Checks, previews, editor and import logic |
-| `docs/screenshot.png`, `docs/screenshot-video.png` | Screenshots for this README |
+| `index.html` | English page |
+| `fr/index.html` | French page |
+| `fr/seo-page-check.fr.js` | French messages, rules and examples |
+| `seo-page-check.css` | Styles, including light and dark themes (shared) |
+| `seo-page-check.js` | Checks, previews, editor and import logic (shared, English messages built in) |
+| `docs/` | Screenshots for this README |
 
 ## Browser support
 

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vérification SEO d’une page</title>
+<meta name="description" content="Vérifiez le SEO d’une page dans votre navigateur&nbsp;: titre, méta description, URL, contenu, requête cible, liens, image et vidéo, avec aperçus Google et réseaux sociaux.">
+<meta name="author" content="Simon Adjatan">
+<meta name="theme-color" content="#0f5c63">
+<link rel="canonical" href="https://thecoolsim.github.io/SEO-page-check/fr/">
+<link rel="alternate" hreflang="en" href="https://thecoolsim.github.io/SEO-page-check/">
+<link rel="alternate" hreflang="fr" href="https://thecoolsim.github.io/SEO-page-check/fr/">
+<link rel="alternate" hreflang="x-default" href="https://thecoolsim.github.io/SEO-page-check/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Vérification SEO d’une page">
+<meta property="og:description" content="Vérifiez le titre, la description, l’URL, le contenu, les liens et les images d’une page, avec aperçus Google et réseaux sociaux. Tout se passe dans votre navigateur.">
+<meta property="og:url" content="https://thecoolsim.github.io/SEO-page-check/fr/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f5c63'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='M19 19l6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../seo-page-check.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <nav class="langs" aria-label="Langue"><a href="../" hreflang="en" lang="en">English</a><span aria-current="true">Français</span></nav>
+  <h1>Vérification SEO d’une page</h1>
+  <p>Remplissez les champs ou importez le code source HTML d’une page. Fonctionne pour les articles et les pages vidéo (YouTube ou Vimeo). Chaque vérification est notée bon, moyen ou mauvais, et se met à jour pendant la saisie. Les règles suivent les usages du référencement en français.</p>
+</div></header>
+
+<main class="wrap grid">
+<section class="form">
+  <div class="panel">
+    <details id="importBox">
+      <summary>Importer depuis le code source d’une page</summary>
+      <ol>
+        <li>Ouvrez la page dans votre navigateur.</li>
+        <li>Affichez le code source&nbsp;: Ctrl+U sous Windows ou Linux, Cmd+Option+U sur Mac (dans Safari, activez d’abord le menu Développement).</li>
+        <li>Sélectionnez tout, copiez, puis collez ci-dessous.</li>
+      </ol>
+      <textarea id="src" placeholder="Collez ici le code source HTML complet"></textarea>
+      <div class="btns">
+        <button id="importBtn" type="button">Lire la source</button>
+        <button id="exampleBtn" type="button" class="ghost">Charger un exemple</button>
+        <span id="importMsg" class="small"></span>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <div class="field">
+      <span class="lbl">Type de page</span>
+      <div class="seg" role="radiogroup" aria-label="Type de page">
+        <label><input type="radio" name="ptype" value="article" checked> Article</label>
+        <label><input type="radio" name="ptype" value="video"> Page vidéo</label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="kp"><span class="dot" data-g="kp"></span>Requête cible</label>
+      <input type="text" id="kp" placeholder="ex. finance climatique">
+    </div>
+    <div class="field">
+      <label class="lbl" for="title"><span class="dot" data-g="title"></span>Titre SEO <span class="hint" id="titleHint"></span></label>
+      <input type="text" id="title">
+      <div class="meter"><span id="titleBar"></span></div>
+    </div>
+    <div class="row2 field">
+      <div>
+        <label class="lbl" for="domain"><span class="dot"></span>Domaine du site</label>
+        <input type="text" id="domain" placeholder="example.org">
+      </div>
+      <div>
+        <label class="lbl" for="slug"><span class="dot" data-g="slug"></span>URL (slug)</label>
+        <input type="text" id="slug" placeholder="fr/actualites/exemple-de-page">
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="desc"><span class="dot" data-g="desc"></span>Méta description / extrait <span class="hint" id="descHint"></span></label>
+      <textarea id="desc"></textarea>
+      <div class="meter"><span id="descBar"></span></div>
+    </div>
+    <div class="video-only vbox">
+      <h2>Vidéo</h2>
+      <div class="field">
+        <label class="lbl" for="vurl"><span class="dot" data-g="vurl"></span>Adresse YouTube ou Vimeo <span class="hint">ou code d’intégration</span></label>
+        <div class="inline">
+          <input type="text" id="vurl" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/...">
+          <button type="button" id="vfetch" title="Remplir les champs vidéo vides depuis YouTube ou Vimeo">Récupérer les infos</button>
+        </div>
+        <p class="small" id="vmsg"></p>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vtitle"><span class="dot" data-g="vtitle"></span>Titre de la vidéo <span class="hint" id="vtitleHint"></span></label>
+        <input type="text" id="vtitle">
+      </div>
+      <div class="field">
+        <label class="lbl" for="vdesc"><span class="dot" data-g="vdesc"></span>Description de la vidéo <span class="hint" id="vdescHint"></span></label>
+        <textarea id="vdesc" placeholder="Ce que montre la vidéo. Ajoutez les chapitres sur des lignes séparées&nbsp;:&#10;0:00 Introduction&#10;1:15 Premier sujet"></textarea>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vthumb"><span class="dot" data-g="vthumb"></span>URL de la miniature</label>
+        <div class="drop">
+          <div class="thumb vthumb" id="vprev">Aucune</div>
+          <div class="info"><input type="text" id="vthumb" placeholder="https://..."><div id="vthumbInfo"></div></div>
+        </div>
+      </div>
+      <div class="row2 field">
+        <div>
+          <label class="lbl" for="vdate"><span class="dot" data-g="vdate"></span>Date de mise en ligne</label>
+          <input type="date" id="vdate">
+        </div>
+        <div>
+          <label class="lbl" for="vdur"><span class="dot" data-g="vdur"></span>Durée</label>
+          <input type="text" id="vdur" placeholder="4:35">
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="vtrans"><span class="dot" data-g="vtrans"></span>Transcription <span class="hint" id="vtransHint"></span></label>
+        <textarea id="vtrans" class="tall" placeholder="Tout ce qui est dit dans la vidéo"></textarea>
+      </div>
+      <div class="field">
+        <label class="check"><span class="dot" data-g="vcap"></span><input type="checkbox" id="vcap"> Des sous-titres sont disponibles</label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" id="bodyLbl"><span class="dot" data-g="body"></span>Corps du texte <span class="hint" id="bodyHint"></span></label>
+      <div class="rte-wrap" id="rteWrap">
+        <div class="rte-bar" role="toolbar" aria-label="Mise en forme du texte">
+          <select id="blockSel" class="fmt" aria-label="Style du texte" title="Style du texte">
+            <option value="p">Paragraphe</option><option value="h2">Titre 2</option><option value="h3">Titre 3</option><option value="h4">Titre 4</option><option value="blockquote">Citation</option>
+          </select>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" data-cmd="bold" title="Gras (Ctrl/Cmd+B)" aria-pressed="false"><b>G</b></button>
+          <button type="button" class="fmt" data-cmd="italic" title="Italique (Ctrl/Cmd+I)" aria-pressed="false"><i>I</i></button>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" data-cmd="insertUnorderedList" title="Liste à puces" aria-pressed="false">Puces</button>
+          <button type="button" class="fmt" data-cmd="insertOrderedList" title="Liste numérotée" aria-pressed="false">Numéros</button>
+          <span class="sep fmt"></span>
+          <button type="button" class="fmt" id="btnInt" title="Lien interne">Lien interne</button>
+          <button type="button" class="fmt" id="btnExt" title="Lien externe (Ctrl/Cmd+K)">Lien externe</button>
+          <button type="button" class="fmt" id="btnUnlink" title="Supprimer le lien">Retirer le lien</button>
+          <button type="button" class="fmt" id="btnClean" title="Retirer le gras, l’italique et la mise en forme parasite">Effacer la mise en forme</button>
+          <span class="push"></span>
+          <button type="button" id="btnHtml" aria-pressed="false" title="Afficher ou modifier le HTML">HTML</button>
+          <button type="button" id="btnCopy" title="Copier le HTML nettoyé">Copier le HTML</button>
+        </div>
+        <div class="rte-link" id="linkPanel" role="group" aria-label="Lien">
+          <strong id="linkLabel">Lien interne</strong>
+          <input type="text" id="linkUrl" aria-label="Adresse du lien">
+          <label><input type="checkbox" id="linkBlank"> Ouvrir dans un nouvel onglet</label>
+          <button type="button" id="linkApply">Appliquer</button>
+          <button type="button" class="ghost" id="linkCancel">Annuler</button>
+          <span class="note" id="linkNote"></span>
+        </div>
+        <div class="rte" id="bodyEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Écrivez ou collez le corps du texte. La mise en forme venant de Word ou d’une page web est nettoyée automatiquement."></div>
+        <textarea id="bodyHtml" aria-label="HTML du corps du texte" spellcheck="false"></textarea>
+      </div>
+      <div class="rte-foot"><span class="k ki"><i></i>Lien interne</span><span class="k ke"><i></i>Lien externe</span><span id="linkCounts"></span><span id="copyMsg"></span></div>
+    </div>
+    <div class="field">
+      <label class="lbl"><span class="dot" data-g="image"></span>Image mise en avant</label>
+      <div class="drop">
+        <div class="thumb" id="thumb">Aucune</div>
+        <div class="info">
+          <input type="file" id="imgFile" accept="image/*" aria-label="Choisir l’image mise en avant">
+          <div id="imgInfo"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="alt"><span class="dot" data-g="image"></span>Texte alternatif de l’image</label>
+      <input type="text" id="alt">
+    </div>
+    <div class="field">
+      <label class="lbl" for="tags"><span class="dot" data-g="tags"></span>Étiquettes / mots-clés <span class="hint">séparés par des virgules</span></label>
+      <input type="text" id="tags" placeholder="climat, adaptation, finance">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="clearBtn">Effacer tous les champs</button>
+    </div>
+  </div>
+</section>
+
+<aside class="results">
+  <div class="verdict" id="verdict"></div>
+  <div class="previews">
+    <div class="panel pv"><h2>Aperçu dans Google</h2><div class="serp" id="serp"></div></div>
+    <div class="panel pv"><h2>Aperçu du partage sur les réseaux sociaux</h2><div class="social" id="social"></div></div>
+  </div>
+  <div class="panel groups"><h2>Vérifications</h2><div id="groups"></div></div>
+  <div class="panel video-only ldbox">
+    <h2>Données structurées de la vidéo</h2>
+    <p class="small">Ajoutez ce code à la page pour que Google puisse afficher la vidéo dans les résultats. Vérifiez-le avec le <a href="https://search.google.com/test/rich-results?hl=fr" target="_blank" rel="noopener">test des résultats enrichis</a>.</p>
+    <pre id="ld"></pre>
+    <div class="btns"><button type="button" id="ldCopy">Copier le JSON-LD</button><span id="ldMsg" class="small"></span></div>
+  </div>
+</aside>
+</main>
+
+<footer class="foot"><div class="wrap">
+  <p>Tout se passe dans votre navigateur. Rien de ce que vous saisissez ou importez n’est envoyé ailleurs&nbsp;; votre dernier brouillon est conservé dans le stockage local de ce navigateur. Sur les pages vidéo, la miniature est chargée depuis son adresse, et «&nbsp;Récupérer les infos&nbsp;» demande à YouTube ou Vimeo les informations publiques de la vidéo.</p>
+  <p>&copy; 2026 Simon Adjatan &middot; <a href="https://github.com/Thecoolsim/SEO-page-check">Code source sur GitHub</a> &middot; Licence MIT</p>
+</div></footer>
+
+<script src="seo-page-check.fr.js"></script>
+<script src="../seo-page-check.js"></script>
+</body>
+</html>
