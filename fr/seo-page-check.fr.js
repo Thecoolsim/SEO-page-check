@@ -5,7 +5,20 @@ const dec=(x,d)=>x.toFixed(d).replace('.',',');
 const thousands=n=>n.toLocaleString('fr-FR');
 
 const msgs={
-  g:{kp:'Requête cible',title:'Titre SEO',desc:'Méta description',slug:'URL',video:'Vidéo',vtrans:'Transcription',body:'Contenu',image:'Image mise en avant',tags:'Étiquettes / mots-clés',tech:'Balises de la page (source)'},
+  g:{kp:'Requête cible',title:'Titre SEO',desc:'Méta description',slug:'URL',video:'Vidéo',vtrans:'Transcription',body:'Contenu',image:'Image mise en avant',tags:'Étiquettes / mots-clés',lang:'Grammaire et orthographe',tech:'Balises de la page (source)'},
+  fields:{kp:'Requête cible',title:'Titre SEO',desc:'Méta description',body:'Corps du texte',alt:'Texte alternatif',tags:'Étiquettes',vtitle:'Titre de la vidéo',vdesc:'Description de la vidéo',vtrans:'Transcription'},
+  ltKind:{misspelling:'Orthographe',grammar:'Grammaire',typographical:'Typographie',style:'Style',other:'Autre'},
+  ltNone:'Aucun problème de grammaire ou d’orthographe trouvé.',
+  ltField:(label,n)=>label+' : '+pl(n,'problème possible','problèmes possibles')+'.',
+  ltIssue:(snip,msg,sugg)=>'« '+snip+' »'+(sugg?' → '+sugg:'')+'. '+msg,
+  ltMore:n=>'Et '+n+' de plus.',
+  ltChecking:'Vérification en cours…',
+  ltChecked:'Vérification terminée.',
+  ltTooLong:n=>'Seuls les '+thousands(n)+' premiers caractères ont été vérifiés (limite du service public).',
+  ltRate:'Trop de vérifications en peu de temps. Attendez une minute et réessayez.',
+  ltFail:'Impossible de joindre le serveur LanguageTool.',
+  ltBadServer:'L’adresse du serveur doit commencer par https://.',
+  ltEmpty:'Il n’y a pas encore de texte à vérifier.',
   label:{good:'Bon',ok:'Moyen',bad:'Mauvais'},
   overall:p=>p+' / 100 au total',
   counts:n=>[pl(n.good,'bon','bons'),pl(n.ok,'moyen','moyens'),n.bad+' mauvais'],
@@ -221,7 +234,8 @@ window.SEO_PAGE_CHECK_LANG={
       'quoique','tandis que','alors que','grâce à','à cause de','c\'est pourquoi','de sorte que','si bien que','en particulier','surtout',
       'autrement dit','en d\'autres termes','pour conclure','pour commencer','en premier lieu','en second lieu','dans l\'ensemble','de ce fait',
       'en définitive','au final','en bref','ainsi que','de surcroît','par la suite'],
-    sentenceMax:20
+    sentenceMax:20,
+    ltLanguage:'fr'
   },
   msgs,
   examples:{

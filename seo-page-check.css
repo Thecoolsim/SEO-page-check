@@ -180,3 +180,19 @@ label.check{display:flex;align-items:center;gap:8px;font-weight:600;cursor:point
 .langs a:hover{border-color:var(--accent)}
 .langs span{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 #imgUrl{margin:8px 0 4px}
+.ltbox{margin-bottom:16px}
+.ltbox h2{font-size:14px;font-weight:700;margin:0 0 8px;color:var(--muted)}
+.ltbox .btns{margin-top:8px}
+.ltbox select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.ltbox button:disabled{opacity:.45;cursor:default}
+.ltserver{margin-top:10px}
+.ltserver summary{font-size:13px;font-weight:600;color:var(--muted)}
+.ltserver summary::after{font-size:16px}
+.ltserver input{margin-top:8px;font-size:13px}
+#ltDialog{max-width:520px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:20px 22px}
+#ltDialog::backdrop{background:rgba(10,20,26,.55)}
+#ltDialog h2{font-size:18px;margin:0 0 10px}
+#ltDialog p{margin:0 0 10px;font-size:14px}
+.group.lang li{grid-template-columns:86px 1fr}
+.group li.x{font-size:13px;color:var(--muted)}
+.group li.x .tag{background:var(--bg);color:var(--muted);border:1px solid var(--line)}

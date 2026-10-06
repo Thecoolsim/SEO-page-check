@@ -40,7 +40,7 @@
         <li>Affichez le code source&nbsp;: Ctrl+U sous Windows ou Linux, Cmd+Option+U sur Mac (dans Safari, activez d’abord le menu Développement).</li>
         <li>Sélectionnez tout, copiez, puis collez ci-dessous.</li>
       </ol>
-      <textarea id="src" placeholder="Collez ici le code source HTML complet"></textarea>
+      <textarea id="src" spellcheck="false" placeholder="Collez ici le code source HTML complet"></textarea>
       <div class="btns">
         <button id="importBtn" type="button">Lire la source</button>
         <button id="exampleBtn" type="button" class="ghost">Charger un exemple</button>
@@ -59,26 +59,26 @@
     </div>
     <div class="field">
       <label class="lbl" for="kp"><span class="dot" data-g="kp"></span>Requête cible</label>
-      <input type="text" id="kp" placeholder="ex. finance climatique">
+      <input type="text" id="kp" spellcheck="true" placeholder="ex. finance climatique">
     </div>
     <div class="field">
       <label class="lbl" for="title"><span class="dot" data-g="title"></span>Titre SEO <span class="hint" id="titleHint"></span></label>
-      <input type="text" id="title">
+      <input type="text" id="title" spellcheck="true">
       <div class="meter"><span id="titleBar"></span></div>
     </div>
     <div class="row2 field">
       <div>
         <label class="lbl" for="domain"><span class="dot"></span>Domaine du site</label>
-        <input type="text" id="domain" placeholder="example.org">
+        <input type="text" id="domain" spellcheck="false" placeholder="example.org">
       </div>
       <div>
         <label class="lbl" for="slug"><span class="dot" data-g="slug"></span>URL (slug)</label>
-        <input type="text" id="slug" placeholder="fr/actualites/exemple-de-page">
+        <input type="text" id="slug" spellcheck="false" placeholder="fr/actualites/exemple-de-page">
       </div>
     </div>
     <div class="field">
       <label class="lbl" for="desc"><span class="dot" data-g="desc"></span>Méta description / extrait <span class="hint" id="descHint"></span></label>
-      <textarea id="desc"></textarea>
+      <textarea id="desc" spellcheck="true"></textarea>
       <div class="meter"><span id="descBar"></span></div>
     </div>
     <div class="video-only vbox">
@@ -86,24 +86,24 @@
       <div class="field">
         <label class="lbl" for="vurl"><span class="dot" data-g="vurl"></span>Adresse YouTube ou Vimeo <span class="hint">ou code d’intégration</span></label>
         <div class="inline">
-          <input type="text" id="vurl" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/...">
+          <input type="text" id="vurl" spellcheck="false" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/...">
           <button type="button" id="vfetch" title="Remplir les champs vidéo vides depuis YouTube ou Vimeo">Récupérer les infos</button>
         </div>
         <p class="small" id="vmsg"></p>
       </div>
       <div class="field">
         <label class="lbl" for="vtitle"><span class="dot" data-g="vtitle"></span>Titre de la vidéo <span class="hint" id="vtitleHint"></span></label>
-        <input type="text" id="vtitle">
+        <input type="text" id="vtitle" spellcheck="true">
       </div>
       <div class="field">
         <label class="lbl" for="vdesc"><span class="dot" data-g="vdesc"></span>Description de la vidéo <span class="hint" id="vdescHint"></span></label>
-        <textarea id="vdesc" placeholder="Ce que montre la vidéo. Ajoutez les chapitres sur des lignes séparées&nbsp;:&#10;0:00 Introduction&#10;1:15 Premier sujet"></textarea>
+        <textarea id="vdesc" spellcheck="true" placeholder="Ce que montre la vidéo. Ajoutez les chapitres sur des lignes séparées&nbsp;:&#10;0:00 Introduction&#10;1:15 Premier sujet"></textarea>
       </div>
       <div class="field">
         <label class="lbl" for="vthumb"><span class="dot" data-g="vthumb"></span>URL de la miniature</label>
         <div class="drop">
           <div class="thumb vthumb" id="vprev">Aucune</div>
-          <div class="info"><input type="text" id="vthumb" placeholder="https://..."><div id="vthumbInfo"></div></div>
+          <div class="info"><input type="text" id="vthumb" spellcheck="false" placeholder="https://..."><div id="vthumbInfo"></div></div>
         </div>
       </div>
       <div class="row2 field">
@@ -113,12 +113,12 @@
         </div>
         <div>
           <label class="lbl" for="vdur"><span class="dot" data-g="vdur"></span>Durée</label>
-          <input type="text" id="vdur" placeholder="4:35">
+          <input type="text" id="vdur" spellcheck="false" placeholder="4:35">
         </div>
       </div>
       <div class="field">
         <label class="lbl" for="vtrans"><span class="dot" data-g="vtrans"></span>Transcription <span class="hint" id="vtransHint"></span></label>
-        <textarea id="vtrans" class="tall" placeholder="Tout ce qui est dit dans la vidéo"></textarea>
+        <textarea id="vtrans" spellcheck="true" class="tall" placeholder="Tout ce qui est dit dans la vidéo"></textarea>
       </div>
       <div class="field">
         <label class="check"><span class="dot" data-g="vcap"></span><input type="checkbox" id="vcap"> Des sous-titres sont disponibles</label>
@@ -148,13 +148,13 @@
         </div>
         <div class="rte-link" id="linkPanel" role="group" aria-label="Lien">
           <strong id="linkLabel">Lien interne</strong>
-          <input type="text" id="linkUrl" aria-label="Adresse du lien">
+          <input type="text" id="linkUrl" spellcheck="false" aria-label="Adresse du lien">
           <label><input type="checkbox" id="linkBlank"> Ouvrir dans un nouvel onglet</label>
           <button type="button" id="linkApply">Appliquer</button>
           <button type="button" class="ghost" id="linkCancel">Annuler</button>
           <span class="note" id="linkNote"></span>
         </div>
-        <div class="rte" id="bodyEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Écrivez ou collez le corps du texte. La mise en forme venant de Word ou d’une page web est nettoyée automatiquement."></div>
+        <div class="rte" id="bodyEditor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Écrivez ou collez le corps du texte. La mise en forme venant de Word ou d’une page web est nettoyée automatiquement."></div>
         <textarea id="bodyHtml" aria-label="HTML du corps du texte" spellcheck="false"></textarea>
       </div>
       <div class="rte-foot"><span class="k ki"><i></i>Lien interne</span><span class="k ke"><i></i>Lien externe</span><span id="linkCounts"></span><span id="copyMsg"></span></div>
@@ -165,18 +165,18 @@
         <div class="thumb" id="thumb">Aucune</div>
         <div class="info">
           <input type="file" id="imgFile" accept="image/*" aria-label="Choisir l’image mise en avant">
-          <input type="text" id="imgUrl" placeholder="ou collez l’adresse de l’image (https://...)" aria-label="Adresse de l’image mise en avant">
+          <input type="text" id="imgUrl" spellcheck="false" placeholder="ou collez l’adresse de l’image (https://...)" aria-label="Adresse de l’image mise en avant">
           <div id="imgInfo"></div>
         </div>
       </div>
     </div>
     <div class="field">
       <label class="lbl" for="alt"><span class="dot" data-g="image"></span>Texte alternatif de l’image</label>
-      <input type="text" id="alt">
+      <input type="text" id="alt" spellcheck="true">
     </div>
     <div class="field">
       <label class="lbl" for="tags"><span class="dot" data-g="tags"></span>Étiquettes / mots-clés <span class="hint">séparés par des virgules</span></label>
-      <input type="text" id="tags" placeholder="climat, adaptation, finance">
+      <input type="text" id="tags" spellcheck="true" placeholder="climat, adaptation, finance">
     </div>
     <div class="btns">
       <button type="button" class="ghost" id="clearBtn">Effacer tous les champs</button>
@@ -186,6 +186,20 @@
 
 <aside class="results">
   <div class="verdict" id="verdict"></div>
+  <div class="panel ltbox">
+    <h2>Grammaire et orthographe</h2>
+    <label class="check"><input type="checkbox" id="ltOn"> Vérifier la grammaire et l’orthographe en ligne</label>
+    <p class="small">Si vous activez cette option, votre texte est envoyé à <b class="lthost"></b> pour être vérifié. Rien n’est envoyé tant qu’elle est désactivée. Le correcteur de votre navigateur souligne les fautes d’orthographe dans tous les cas.</p>
+    <div class="btns">
+      <button type="button" class="ghost" id="ltCheck" disabled>Vérifier maintenant</button>
+      <span id="ltMsg" class="small" role="status"></span>
+    </div>
+    <details class="ltserver">
+      <summary>Serveur</summary>
+      <input type="text" id="ltServer" spellcheck="false" aria-label="Adresse du serveur LanguageTool" placeholder="https://api.languagetool.org/v2/check">
+      <p class="small">Laissez vide pour utiliser le service public et gratuit de LanguageTool. Pour garder les textes au sein de votre organisation, indiquez l’adresse de votre propre serveur LanguageTool, terminée par /v2/check.</p>
+    </details>
+  </div>
   <div class="previews">
     <div class="panel pv"><h2>Aperçu dans Google</h2><div class="serp" id="serp"></div></div>
     <div class="panel pv"><h2>Aperçu du partage sur les réseaux sociaux</h2><div class="social" id="social"></div></div>
@@ -201,9 +215,16 @@
 </main>
 
 <footer class="foot"><div class="wrap">
-  <p>Tout se passe dans votre navigateur. Rien de ce que vous saisissez ou importez n’est envoyé ailleurs&nbsp;; votre dernier brouillon est conservé dans le stockage local de ce navigateur. Une image ou une miniature vidéo indiquée par son adresse est chargée depuis cette adresse pour vérifier sa taille, et «&nbsp;Récupérer les infos&nbsp;» demande à YouTube ou Vimeo les informations publiques de la vidéo.</p>
+  <p>Tout se passe dans votre navigateur. Rien de ce que vous saisissez ou importez n’est envoyé ailleurs&nbsp;; votre dernier brouillon est conservé dans le stockage local de ce navigateur. Une image ou une miniature vidéo indiquée par son adresse est chargée depuis cette adresse pour vérifier sa taille, et «&nbsp;Récupérer les infos&nbsp;» demande à YouTube ou Vimeo les informations publiques de la vidéo. La vérification facultative de la grammaire et de l’orthographe n’envoie votre texte à LanguageTool qu’après votre confirmation.</p>
   <p>&copy; 2026 Simon Adjatan &middot; <a href="https://github.com/Thecoolsim/SEO-page-check">Code source sur GitHub</a> &middot; Licence MIT</p>
 </div></footer>
+
+<dialog id="ltDialog" aria-labelledby="ltDlgTitle">
+  <h2 id="ltDlgTitle">Envoyer votre texte à LanguageTool&nbsp;?</h2>
+  <p>Pour vérifier la grammaire et l’orthographe, votre requête cible, vos titres, vos descriptions, le corps du texte, le texte alternatif, les étiquettes et la transcription seront envoyés à <b class="lthost"></b><span class="ltpublic">, un service exploité par LanguageTool GmbH en Allemagne</span>. Ne l’utilisez pas pour des brouillons confidentiels.</p>
+  <p>Le texte est renvoyé après chaque modification, tant que la vérification reste activée. Rien n’est envoyé avant votre confirmation.</p>
+  <div class="btns"><button type="button" id="ltSend">Envoyer et vérifier</button><button type="button" class="ghost" id="ltCancel" autofocus>Annuler</button></div>
+</dialog>
 
 <script src="seo-page-check.fr.js"></script>
 <script src="../seo-page-check.js"></script>

@@ -18,6 +18,7 @@ A single-page tool for checking a web page's on-page SEO before you publish it, 
 - **Import from page source**: paste a page's full HTML to fill the fields and run technical checks (H1 count, canonical, Open Graph, Twitter card, `lang`, hreflang, robots `noindex`, viewport, image alt attributes)
 - **Video pages**: checks the video address, title, description, chapters, thumbnail, upload date, duration, transcript and captions, and generates `VideoObject` structured data (JSON-LD) to paste into the page
 - "Load an example" button for a quick demo (an article or a video page, depending on the page type)
+- **Spelling and grammar**: the browser's own spellcheck underlines mistakes in every text field, and an optional online check with [LanguageTool](https://languagetool.org) adds grammar, spelling and style results to the checks (off by default; see [Privacy](#privacy))
 - Light and dark themes (follows the system setting)
 - **French version** in [`fr/`](fr/) with a French interface and French SEO rules (see [French version](#french-version))
 
@@ -27,6 +28,9 @@ Everything runs in your browser. Nothing you type, paste or upload is sent to a 
 
 - A featured image or video thumbnail given by address is loaded from that address so its size can be checked.
 - **Fetch details** asks YouTube or Vimeo (their public oEmbed service) for the video's title, thumbnail and, on Vimeo, the description, upload date and duration. It only runs when you click it.
+- **Check grammar and spelling online** sends the keyphrase, titles, descriptions, body text, alt text, tags and transcript to LanguageTool. It is off by default. Turning it on opens a confirmation that names the server, and nothing is sent until you confirm. While it is on, the text is sent again a few seconds after you stop typing. The choice is remembered in your browser, for that server only.
+
+The browser's own spellcheck (red underlines) runs on your computer. Some browsers offer an "enhanced" spellcheck that sends text to the browser maker; that is a browser setting, not part of this tool.
 
 ## What is checked
 
@@ -93,6 +97,16 @@ Numbers, dates and file sizes use French formats (`3,2 %`, `29/05/2008`, `250 Ko
 ### Adding a language
 
 Copy `fr/` to a new folder, translate `index.html`, and adapt the language file. It sets `window.SEO_PAGE_CHECK_LANG` to `{rules, msgs, examples}` before `seo-page-check.js` loads. Any message left out falls back to English. The rules are `storageKey`, `stopwords`, `typography`, `readability` (`base`, `perWord`, `perSyllable`), `transitions` and `sentenceMax`.
+
+## Grammar and spelling check
+
+The **Grammar and spelling** panel uses the [LanguageTool HTTP API](https://dev.languagetool.org/public-http-api) (LanguageTool is open source, LGPL 2.1).
+
+- **Languages:** British or American English on the English page (British by default), French on the French page.
+- **Results:** a **Grammar and spelling** group in the checks, with one scored line per field ("Body text: 2 possible issues") and up to 25 issues listed with LanguageTool's suggestion. The listed issues are not scored individually, so one long text cannot sink the score.
+- **Scoring:** spelling and grammar errors are Bad, other issues (style, typography) are Medium. In the keyphrase and tags, every issue is Medium, because search terms are often spelled the way people type them. Words from the keyphrase, tags and site domain are never reported as spelling mistakes, and sentence rules (capital letter, final full stop) are skipped for keyphrases, tags, titles and alt text.
+- **Limits of the free public service:** 20 requests and 75,000 characters a minute, 20,000 characters per request. The tool sends one request for all fields, waits for a pause in typing and keeps at least 3.5 seconds between requests.
+- **Your own server:** under **Server**, enter the address of a self-hosted LanguageTool server ending in `/v2/check` (for example the official Docker image) to keep text inside your network. A new server needs its own confirmation.
 
 ## Usage
 

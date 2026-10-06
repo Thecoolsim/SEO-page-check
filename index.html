@@ -39,7 +39,7 @@
         <li>Open the source: Ctrl+U on Windows or Linux, Cmd+Option+U on a Mac (in Safari, turn on the Develop menu first).</li>
         <li>Select all, copy, and paste below.</li>
       </ol>
-      <textarea id="src" placeholder="Paste the full HTML source here"></textarea>
+      <textarea id="src" spellcheck="false" placeholder="Paste the full HTML source here"></textarea>
       <div class="btns">
         <button id="importBtn" type="button">Read source</button>
         <button id="exampleBtn" type="button" class="ghost">Load an example</button>
@@ -58,26 +58,26 @@
     </div>
     <div class="field">
       <label class="lbl" for="kp"><span class="dot" data-g="kp"></span>Focus keyphrase</label>
-      <input type="text" id="kp" placeholder="e.g. climate finance">
+      <input type="text" id="kp" spellcheck="true" placeholder="e.g. climate finance">
     </div>
     <div class="field">
       <label class="lbl" for="title"><span class="dot" data-g="title"></span>SEO title <span class="hint" id="titleHint"></span></label>
-      <input type="text" id="title">
+      <input type="text" id="title" spellcheck="true">
       <div class="meter"><span id="titleBar"></span></div>
     </div>
     <div class="row2 field">
       <div>
         <label class="lbl" for="domain"><span class="dot"></span>Site domain</label>
-        <input type="text" id="domain" placeholder="example.org">
+        <input type="text" id="domain" spellcheck="false" placeholder="example.org">
       </div>
       <div>
         <label class="lbl" for="slug"><span class="dot" data-g="slug"></span>URL slug</label>
-        <input type="text" id="slug" placeholder="en/news/example-page">
+        <input type="text" id="slug" spellcheck="false" placeholder="en/news/example-page">
       </div>
     </div>
     <div class="field">
       <label class="lbl" for="desc"><span class="dot" data-g="desc"></span>Meta description / excerpt <span class="hint" id="descHint"></span></label>
-      <textarea id="desc"></textarea>
+      <textarea id="desc" spellcheck="true"></textarea>
       <div class="meter"><span id="descBar"></span></div>
     </div>
     <div class="video-only vbox">
@@ -85,24 +85,24 @@
       <div class="field">
         <label class="lbl" for="vurl"><span class="dot" data-g="vurl"></span>YouTube or Vimeo address <span class="hint">or paste the embed code</span></label>
         <div class="inline">
-          <input type="text" id="vurl" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
+          <input type="text" id="vurl" spellcheck="false" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
           <button type="button" id="vfetch" title="Fill empty video fields from YouTube or Vimeo">Fetch details</button>
         </div>
         <p class="small" id="vmsg"></p>
       </div>
       <div class="field">
         <label class="lbl" for="vtitle"><span class="dot" data-g="vtitle"></span>Video title <span class="hint" id="vtitleHint"></span></label>
-        <input type="text" id="vtitle">
+        <input type="text" id="vtitle" spellcheck="true">
       </div>
       <div class="field">
         <label class="lbl" for="vdesc"><span class="dot" data-g="vdesc"></span>Video description <span class="hint" id="vdescHint"></span></label>
-        <textarea id="vdesc" placeholder="What the video shows. Add chapters on their own lines:&#10;0:00 Introduction&#10;1:15 First topic"></textarea>
+        <textarea id="vdesc" spellcheck="true" placeholder="What the video shows. Add chapters on their own lines:&#10;0:00 Introduction&#10;1:15 First topic"></textarea>
       </div>
       <div class="field">
         <label class="lbl" for="vthumb"><span class="dot" data-g="vthumb"></span>Thumbnail URL</label>
         <div class="drop">
           <div class="thumb vthumb" id="vprev">None</div>
-          <div class="info"><input type="text" id="vthumb" placeholder="https://..."><div id="vthumbInfo"></div></div>
+          <div class="info"><input type="text" id="vthumb" spellcheck="false" placeholder="https://..."><div id="vthumbInfo"></div></div>
         </div>
       </div>
       <div class="row2 field">
@@ -112,12 +112,12 @@
         </div>
         <div>
           <label class="lbl" for="vdur"><span class="dot" data-g="vdur"></span>Duration</label>
-          <input type="text" id="vdur" placeholder="4:35">
+          <input type="text" id="vdur" spellcheck="false" placeholder="4:35">
         </div>
       </div>
       <div class="field">
         <label class="lbl" for="vtrans"><span class="dot" data-g="vtrans"></span>Transcript <span class="hint" id="vtransHint"></span></label>
-        <textarea id="vtrans" class="tall" placeholder="Everything that is said in the video"></textarea>
+        <textarea id="vtrans" spellcheck="true" class="tall" placeholder="Everything that is said in the video"></textarea>
       </div>
       <div class="field">
         <label class="check"><span class="dot" data-g="vcap"></span><input type="checkbox" id="vcap"> Captions or subtitles are available</label>
@@ -147,13 +147,13 @@
         </div>
         <div class="rte-link" id="linkPanel" role="group" aria-label="Link">
           <strong id="linkLabel">Internal link</strong>
-          <input type="text" id="linkUrl" aria-label="Link address">
+          <input type="text" id="linkUrl" spellcheck="false" aria-label="Link address">
           <label><input type="checkbox" id="linkBlank"> Open in new tab</label>
           <button type="button" id="linkApply">Apply</button>
           <button type="button" class="ghost" id="linkCancel">Cancel</button>
           <span class="note" id="linkNote"></span>
         </div>
-        <div class="rte" id="bodyEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Write or paste the body text. Formatting from Word or a web page is cleaned automatically."></div>
+        <div class="rte" id="bodyEditor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="bodyLbl" data-placeholder="Write or paste the body text. Formatting from Word or a web page is cleaned automatically."></div>
         <textarea id="bodyHtml" aria-label="Body HTML" spellcheck="false"></textarea>
       </div>
       <div class="rte-foot"><span class="k ki"><i></i>Internal link</span><span class="k ke"><i></i>External link</span><span id="linkCounts"></span><span id="copyMsg"></span></div>
@@ -164,18 +164,18 @@
         <div class="thumb" id="thumb">None</div>
         <div class="info">
           <input type="file" id="imgFile" accept="image/*" aria-label="Choose featured image">
-          <input type="text" id="imgUrl" placeholder="or paste the image address (https://...)" aria-label="Featured image address">
+          <input type="text" id="imgUrl" spellcheck="false" placeholder="or paste the image address (https://...)" aria-label="Featured image address">
           <div id="imgInfo"></div>
         </div>
       </div>
     </div>
     <div class="field">
       <label class="lbl" for="alt"><span class="dot" data-g="image"></span>Image alt text</label>
-      <input type="text" id="alt">
+      <input type="text" id="alt" spellcheck="true">
     </div>
     <div class="field">
       <label class="lbl" for="tags"><span class="dot" data-g="tags"></span>Tags / keywords <span class="hint">separate with commas</span></label>
-      <input type="text" id="tags" placeholder="climate, adaptation, finance">
+      <input type="text" id="tags" spellcheck="true" placeholder="climate, adaptation, finance">
     </div>
     <div class="btns">
       <button type="button" class="ghost" id="clearBtn">Clear all fields</button>
@@ -185,6 +185,21 @@
 
 <aside class="results">
   <div class="verdict" id="verdict"></div>
+  <div class="panel ltbox">
+    <h2>Grammar and spelling</h2>
+    <label class="check"><input type="checkbox" id="ltOn"> Check grammar and spelling online</label>
+    <p class="small">Turning this on sends your text to <b class="lthost"></b> for checking. Nothing is sent while it is off. Your browser's own spellcheck underlines spelling mistakes either way.</p>
+    <div class="btns">
+      <select id="ltLang" aria-label="English variant"><option value="en-GB">British English</option><option value="en-US">American English</option></select>
+      <button type="button" class="ghost" id="ltCheck" disabled>Check now</button>
+      <span id="ltMsg" class="small" role="status"></span>
+    </div>
+    <details class="ltserver">
+      <summary>Server</summary>
+      <input type="text" id="ltServer" spellcheck="false" aria-label="LanguageTool server address" placeholder="https://api.languagetool.org/v2/check">
+      <p class="small">Leave empty to use the free public LanguageTool service. To keep text inside your organisation, enter the address of your own LanguageTool server, ending in /v2/check.</p>
+    </details>
+  </div>
   <div class="previews">
     <div class="panel pv"><h2>Google result preview</h2><div class="serp" id="serp"></div></div>
     <div class="panel pv"><h2>Social share preview</h2><div class="social" id="social"></div></div>
@@ -200,9 +215,16 @@
 </main>
 
 <footer class="foot"><div class="wrap">
-  <p>Everything runs in your browser. Nothing you type or import is sent anywhere; your last draft is kept in this browser's local storage. An image or video thumbnail given by address is loaded from that address to check its size, and "Fetch details" asks YouTube or Vimeo for the video's public details.</p>
+  <p>Everything runs in your browser. Nothing you type or import is sent anywhere; your last draft is kept in this browser's local storage. An image or video thumbnail given by address is loaded from that address to check its size, "Fetch details" asks YouTube or Vimeo for the video's public details, and the optional grammar and spelling check sends your text to LanguageTool only after you confirm.</p>
   <p>&copy; 2026 Simon Adjatan &middot; <a href="https://github.com/Thecoolsim/SEO-page-check">Source on GitHub</a> &middot; MIT License</p>
 </div></footer>
+
+<dialog id="ltDialog" aria-labelledby="ltDlgTitle">
+  <h2 id="ltDlgTitle">Send your text to LanguageTool?</h2>
+  <p>To check grammar and spelling, your keyphrase, titles, descriptions, body text, alt text, tags and transcript will be sent to <b class="lthost"></b><span class="ltpublic">, a service run by LanguageTool GmbH in Germany</span>. Don't use this for confidential drafts.</p>
+  <p>The text is sent again after you make changes, for as long as the check stays on. Nothing is sent until you confirm.</p>
+  <div class="btns"><button type="button" id="ltSend">Send and check</button><button type="button" class="ghost" id="ltCancel" autofocus>Cancel</button></div>
+</dialog>
 
 <script src="seo-page-check.js"></script>
 </body>

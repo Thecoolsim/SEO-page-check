@@ -12,12 +12,26 @@ const RULES=Object.assign({
   typography:false,  // French spacing before : ; ! ? and inside « »
   readability:null,  // reading ease formula: {base, perWord (sentence length), perSyllable}
   transitions:[],    // transition words and phrases; empty turns the check off
-  sentenceMax:20
+  sentenceMax:20,
+  ltLanguage:'en-GB' // default LanguageTool language code
 },LANG.rules);
 const STOP=new Set(RULES.stopwords.map(norm));
 
 const EN={
-  g:{kp:'Focus keyphrase',title:'SEO title',desc:'Meta description',slug:'URL',video:'Video',vtrans:'Transcript',body:'Content',image:'Featured image',tags:'Tags / keywords',tech:'Page tags (from source)'},
+  g:{kp:'Focus keyphrase',title:'SEO title',desc:'Meta description',slug:'URL',video:'Video',vtrans:'Transcript',body:'Content',image:'Featured image',tags:'Tags / keywords',lang:'Grammar and spelling',tech:'Page tags (from source)'},
+  fields:{kp:'Keyphrase',title:'SEO title',desc:'Meta description',body:'Body text',alt:'Alt text',tags:'Tags',vtitle:'Video title',vdesc:'Video description',vtrans:'Transcript'},
+  ltKind:{misspelling:'Spelling',grammar:'Grammar',typographical:'Typography',style:'Style',other:'Other'},
+  ltNone:'No grammar or spelling issues found.',
+  ltField:(label,n)=>label+': '+n+' possible issue'+(n>1?'s':'')+'.',
+  ltIssue:(snip,msg,sugg)=>'“'+snip+'”'+(sugg?' → '+sugg:'')+'. '+msg,
+  ltMore:n=>'And '+n+' more.',
+  ltChecking:'Checking…',
+  ltChecked:'Checked.',
+  ltTooLong:n=>'Checked the first '+n+' characters only (limit of the public service).',
+  ltRate:'Too many checks in a short time. Wait a minute and try again.',
+  ltFail:'Could not reach the LanguageTool server.',
+  ltBadServer:'The server address must start with https://.',
+  ltEmpty:'There is no text to check yet.',
   label:{good:'Good',ok:'Medium',bad:'Bad'},
   overall:p=>p+' / 100 overall',
   counts:n=>[n.good+' good',n.ok+' medium',n.bad+' bad'],
@@ -340,6 +354,60 @@ function buildLD(){
 }
 
 
+// Optional online grammar and spelling check with LanguageTool. It is off by default, and nothing is
+// sent until the visitor confirms in a dialog. The consent is remembered for that server only.
+const LT_PUBLIC='https://api.languagetool.org/v2/check',LT_KEY=KEY+'-lt';
+const LT={on:false,consent:'',server:'',lang:'',result:null,sent:'',busy:false,again:false,last:0,timer:null};
+try{const v=JSON.parse(localStorage.getItem(LT_KEY)||'{}');['on','consent','server','lang'].forEach(k=>{if(k in v)LT[k]=v[k]})}catch(e){}
+function ltSave(){try{localStorage.setItem(LT_KEY,JSON.stringify({on:LT.on,consent:LT.consent,server:LT.server,lang:LT.lang}))}catch(e){}}
+const ltUrl=()=>(LT.server||'').trim()||LT_PUBLIC;
+const ltHost=()=>{try{return new URL(ltUrl()).host}catch(e){return ltUrl()}};
+const ltReady=()=>LT.on&&LT.consent===ltHost();
+// Many rules (French agreement rules among them) have no issue type, so their category is used as well.
+function ltKind(rule){
+  const t=rule&&rule.issueType||'',c=(rule&&rule.category&&rule.category.id||'').toUpperCase();
+  if(t==='misspelling'||c==='TYPOS')return 'misspelling';
+  if(t==='grammar'||/GRAMM|AGREEMENT|CONFUSED|HOMONYM|PARONYM|CONJUG|VERB/.test(c))return 'grammar';
+  if(t==='typographical'||t==='whitespace'||/TYPOGRAPHY|PUNCTUATION|CASING/.test(c))return 'typographical';
+  if(/^(style|register|duplication)$/.test(t)||/STYLE|REDUNDANCY|REPETITION|PLAIN_ENGLISH/.test(c))return 'style';
+  return 'other';
+}
+function ltStatus(t){$('ltMsg').textContent=t||''}
+// The fields are sent as one text, so one request covers the page; offsets map the results back.
+function ltParts(){
+  const video=S.type==='video',p=[];const push=(f,t)=>{t=(t||'').trim();if(t)p.push({f,t})};
+  push('kp',S.kp);push('title',S.title);push('desc',S.desc);
+  if(video){push('vtitle',S.vtitle);push('vdesc',S.vdesc)}
+  // Tidy the spacing left by removing HTML tags, so it is not reported as the writer's mistake.
+  push('body',bodyText(S.body||'').replace(/^\s*#+\s*/gm,'').replace(/[ \t\u00a0]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n'));
+  if(S.img||!video)push('alt',S.alt);
+  push('tags',S.tags);
+  if(video)push('vtrans',S.vtrans);
+  return p;
+}
+async function ltRun(force){
+  if(!ltReady())return;
+  const parts=ltParts(),max=ltUrl()===LT_PUBLIC?20000:200000;let text='';
+  parts.forEach(p=>{p.start=text.length;text+=p.t;p.end=text.length;text+='\n\n'});
+  if(!text.trim()){if(LT.result){LT.result=null;LT.sent='';render()}ltStatus(m('ltEmpty'));return}
+  const cut=text.length>max;if(cut)text=text.slice(0,max);
+  const key=(LT.lang||RULES.ltLanguage)+'|'+ltUrl()+'|'+text;if(!force&&key===LT.sent)return;
+  if(LT.busy){LT.again=true;return}
+  // The public service allows 20 requests a minute: keep at least 3.5 seconds between requests.
+  const wait=LT.last+3500-Date.now();if(wait>0){clearTimeout(LT.timer);LT.timer=setTimeout(()=>ltRun(force),wait);return}
+  LT.busy=true;LT.last=Date.now();ltStatus(m('ltChecking'));
+  try{
+    const r=await fetch(ltUrl(),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({text,language:LT.lang||RULES.ltLanguage})});
+    if(r.status===429)throw new Error('rate');if(!r.ok)throw new Error('http');
+    const j=await r.json();
+    if(ltReady()){LT.result={parts,text,matches:j.matches||[]};LT.sent=key;ltStatus(cut?m('ltTooLong',max):m('ltChecked'))}
+  }catch(e){ltStatus(e.message==='rate'?m('ltRate'):m('ltFail'))}
+  LT.busy=false;render();
+  if(LT.again){LT.again=false;ltRun()}
+}
+// Re-check after a pause in typing; ltRun skips the request when the text has not changed.
+function ltLater(){if(ltReady()){clearTimeout(LT.timer);LT.timer=setTimeout(()=>ltRun(),2500)}}
+
 function analyse(){
   const G=[];const grp=(key)=>{const g={key,name:T.g[key],items:[]};G.push(g);return g};
   const add=(g,s,t,f)=>g.items.push({s,t,f});
@@ -555,6 +623,30 @@ function analyse(){
     if(kp){if(tags.some(x=>has(x,kp)))add(gg,'good',m('tagKp'));else add(gg,'ok',m('tagNoKp'))}
   }
 
+  if(ltReady()&&LT.result){
+    const gl=grp('lang'),res=LT.result,byF={};
+    // Words from the keyphrase, tags and domain are names the visitor chose: not spelling mistakes.
+    const ign=new Set([S.kp,...tagList(),cleanDomain(S.domain)].flatMap(t=>norm(t).split(/[\s,.'-]+/)).filter(Boolean));
+    res.matches.forEach(x=>{
+      const part=res.parts.find(p=>x.offset>=p.start&&x.offset<p.end);if(!part)return;
+      const snip=res.text.substr(x.offset,x.length),type=ltKind(x.rule);
+      if(type==='misspelling'&&ign.has(norm(snip)))return;
+      // Keyphrases, tags, titles and alt text are not sentences: skip capital-letter and final-punctuation rules there.
+      if(/^(kp|tags|title|alt|vtitle)$/.test(part.f)&&/^(UPPERCASE_SENTENCE_START|PUNCTUATION_PARAGRAPH_END)/.test((x.rule&&x.rule.id)||''))return;
+      // Spelling and grammar errors count as bad, except in the keyphrase and tags, where searchers' own spellings are common.
+      const soft=part.f==='kp'||part.f==='tags'||(type!=='misspelling'&&type!=='grammar');
+      const sugg=x.replacements&&x.replacements[0]?x.replacements[0].value:'';
+      (byF[part.f]=byF[part.f]||[]).push({s:soft?'ok':'bad',type,snip,msg:x.message||'',sugg});
+    });
+    if(!Object.keys(byF).length)add(gl,'good',m('ltNone'));
+    let shown=0,total=0;
+    res.parts.forEach(p=>{const l=byF[p.f];if(!l)return;
+      add(gl,worst(l),m('ltField',T.fields[p.f],l.length),p.f==='alt'?'image':p.f);
+      l.forEach(i=>{total++;if(shown<25){shown++;gl.items.push({s:i.s,x:true,tag:T.ltKind[i.type],t:T.fields[p.f]+' · '+m('ltIssue',i.snip,i.msg,i.sugg)})}});
+    });
+    if(total>shown)gl.items.push({s:'ok',x:true,tag:'…',t:m('ltMore',total-shown)});
+  }
+
   if(S.tech){
     const x=S.tech;const gx=grp('tech');
     if(x.h1===1)add(gx,'good',m('h1One'));else if(x.h1===0)add(gx,'bad',m('h1None'));else add(gx,'ok',m('h1Many',x.h1));
@@ -587,7 +679,7 @@ const worst=items=>items.reduce((w,i)=>RANK[i.s]<RANK[w]?i.s:w,'good');
 function render(){
   probeThumb();probeImg();
   const G=analyse();const video=S.type==='video';
-  const all=G.flatMap(g=>g.items);
+  const all=G.flatMap(g=>g.items).filter(i=>!i.x);
   const n={good:0,ok:0,bad:0};all.forEach(i=>n[i.s]++);
   const pct=all.length?Math.round((n.good+n.ok*0.5)/all.length*100):0;
   const band=pct>=80?'good':pct>=55?'ok':'bad';
@@ -599,13 +691,13 @@ function render(){
     '<div class="counts"><b class="good">'+esc(cn[0])+'</b>, <b class="ok">'+esc(cn[1])+'</b>, <b class="bad">'+esc(cn[2])+'</b></div>';
 
   $('groups').innerHTML=G.map(g=>{const w=worst(g.items);
-    const items=g.items.slice().sort((a,b)=>RANK[a.s]-RANK[b.s]);
-    return '<div class="group"><h3><span class="dot '+w+'"></span>'+esc(g.name)+'</h3><ul>'+
-      items.map(i=>'<li><span class="tag '+i.s+'">'+LABEL[i.s]+'</span><span>'+esc(i.t)+'</span></li>').join('')+'</ul></div>'}).join('');
+    const items=g.items.slice().sort((a,b)=>(a.x?1:0)-(b.x?1:0)||RANK[a.s]-RANK[b.s]);
+    return '<div class="group '+g.key+'"><h3><span class="dot '+w+'"></span>'+esc(g.name)+'</h3><ul>'+
+      items.map(i=>'<li'+(i.x?' class="x"':'')+'><span class="tag '+i.s+'">'+esc(i.tag||LABEL[i.s])+'</span><span>'+esc(i.t)+'</span></li>').join('')+'</ul></div>'}).join('');
 
   const status={},byField={};
   G.forEach(g=>{status[g.key]=worst(g.items);g.items.forEach(i=>{if(i.f)(byField[i.f]=byField[i.f]||[]).push(i)})});
-  Object.keys(byField).forEach(k=>{status[k]=worst(byField[k])});
+  Object.keys(byField).forEach(k=>{const w=worst(byField[k]);if(!status[k]||RANK[w]<RANK[status[k]])status[k]=w});
   document.querySelectorAll('.dot[data-g]').forEach(el=>{const s=status[el.dataset.g];el.className='dot'+(s?' '+s:'')});
 
   const t=(S.title||'').trim(),tw=px(t,TF);
@@ -648,6 +740,7 @@ function render(){
   if(imSrc)th.innerHTML='<img alt="" src="'+esc(imSrc)+'">';else th.textContent=im?(IM.st==='loading'?m('loading'):m('noImage')):m('none');
   $('imgInfo').innerHTML=im?esc([im.name||'',im.w&&im.h?m('dims',im.w,im.h):'',im.bytes?m('kb',im.bytes):''].filter(Boolean).join(', '))+' <button type="button" class="ghost" id="rmImg" style="padding:2px 8px;font-size:12px;margin-left:6px">'+esc(m('remove'))+'</button>':'';
   const rm=$('rmImg');if(rm)rm.onclick=()=>{S.img=null;$('imgFile').value='';$('imgUrl').value='';save();render()};
+  ltLater();
 }
 
 let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{save();render()},120)};
@@ -685,6 +778,34 @@ $('ldCopy').addEventListener('click',async()=>{
   let ok=false;try{await navigator.clipboard.writeText(buildLD());ok=true}catch(e){}
   $('ldMsg').textContent=ok?m('ldCopied'):m('ldCopyFail');setTimeout(()=>{$('ldMsg').textContent=''},2500);
 });
+
+const ltDlg=$('ltDialog'),ltOn=$('ltOn'),ltSel=$('ltLang');
+function ltUi(){
+  document.querySelectorAll('.lthost').forEach(e=>{e.textContent=ltHost()});
+  document.querySelectorAll('.ltpublic').forEach(e=>{e.hidden=ltUrl()!==LT_PUBLIC});
+  ltOn.checked=ltReady();$('ltCheck').disabled=!ltReady();$('ltServer').value=LT.server||'';
+  if(ltSel)ltSel.value=LT.lang||RULES.ltLanguage;
+}
+function ltEnable(){LT.on=true;LT.consent=ltHost();ltSave();ltUi();ltRun(true)}
+function ltDisable(){LT.on=false;LT.result=null;LT.sent='';clearTimeout(LT.timer);ltSave();ltUi();ltStatus('');render()}
+if(LT.on&&!ltReady())LT.on=false;
+ltUi();
+ltOn.addEventListener('change',()=>{
+  if(!ltOn.checked){ltDisable();return}
+  if(LT.consent===ltHost()){ltEnable();return}
+  ltOn.checked=false;
+  if(ltDlg.showModal)ltDlg.showModal();else if(confirm(ltDlg.innerText))ltEnable();
+});
+$('ltSend').addEventListener('click',()=>{ltDlg.close();ltEnable()});
+$('ltCancel').addEventListener('click',()=>ltDlg.close());
+$('ltCheck').addEventListener('click',()=>ltRun(true));
+$('ltServer').addEventListener('change',e=>{
+  const v=e.target.value.trim();
+  if(v&&!/^https?:\/\/\S+$/i.test(v)){ltStatus(m('ltBadServer'));return}
+  // A new server needs its own consent, so the check turns off until the visitor confirms again.
+  LT.server=v===LT_PUBLIC?'':v;ltDisable();
+});
+if(ltSel)ltSel.addEventListener('change',()=>{LT.lang=ltSel.value;ltSave();ltRun(true)});
 
 const ed=$('bodyEditor'),htmlBox=$('bodyHtml'),wrap=$('rteWrap');
 try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
@@ -917,4 +1038,5 @@ $('exampleBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,S.type===
 $('clearBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,{domain:S.domain||'',type:S.type});setEditor('');syncFields();$('imgFile').value='';$('src').value='';$('importMsg').textContent='';save();render()});
 
 render();
+if(ltReady())ltRun(true);
 })();
