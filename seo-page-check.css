@@ -179,3 +179,4 @@ label.check{display:flex;align-items:center;gap:8px;font-weight:600;cursor:point
 .langs a{color:var(--accent);text-decoration:none;background:var(--surface)}
 .langs a:hover{border-color:var(--accent)}
 .langs span{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+#imgUrl{margin:8px 0 4px}

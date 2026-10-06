@@ -9,6 +9,7 @@ A single-page tool for checking a web page's on-page SEO before you publish it, 
 ## Features
 
 - Checks the focus keyphrase, SEO title, meta description, URL slug, body content, featured image, alt text and tags
+- Featured image from a file or from its address (URL); either way its dimensions are measured, and its file size too when the server allows it
 - Overall score out of 100, plus a verdict for each group
 - Google result preview that truncates the title and description by pixel width, as Google does
 - Social share card preview (Open Graph style, 1.91:1 image)
@@ -22,9 +23,9 @@ A single-page tool for checking a web page's on-page SEO before you publish it, 
 
 ## Privacy
 
-Everything runs in your browser. Nothing you type, paste or upload is sent to a server. Your last draft, including an uploaded image, is kept in the browser's `localStorage` so it survives a reload. **Clear all fields** removes it. The only external request is for the Public Sans font from Google Fonts, with two exceptions on video pages:
+Everything runs in your browser. Nothing you type, paste or upload is sent to a server. Your last draft, including an uploaded image, is kept in the browser's `localStorage` so it survives a reload. **Clear all fields** removes it. The only external request is for the Public Sans font from Google Fonts, with two exceptions when you give an image by address or check a video page:
 
-- The video thumbnail is loaded from its address so its size can be checked.
+- A featured image or video thumbnail given by address is loaded from that address so its size can be checked.
 - **Fetch details** asks YouTube or Vimeo (their public oEmbed service) for the video's title, thumbnail and, on Vimeo, the description, upload date and duration. It only runs when you click it.
 
 ## What is checked
@@ -36,7 +37,7 @@ Everything runs in your browser. Nothing you type, paste or upload is sent to a 
 | Meta description | Length, keyphrase present | 120–158 characters |
 | URL | Allowed characters, last segment length, keyphrase words | Lowercase, digits, hyphens; ≤ 75 characters |
 | Content | Word count, keyphrase in first paragraph, density, subheadings, paragraph and sentence length, internal and outbound links | 300+ words; density 0.5–3%; ≤ 25% of sentences over 20 words; paragraphs ≤ 150 words |
-| Featured image | Dimensions, aspect ratio, file size, format, alt text | ≥ 1200 × 630 px, about 1.91:1, ≤ 300 KB, JPEG/PNG/WebP/AVIF; alt ≤ 125 characters |
+| Featured image (file or URL) | Dimensions, aspect ratio, file size, format, alt text | ≥ 1200 × 630 px, about 1.91:1, ≤ 300 KB, JPEG/PNG/WebP/AVIF; alt ≤ 125 characters |
 | Tags | Count, duplicates, long phrases, keyphrase match | 3–8 tags |
 | Page tags (import only) | H1, canonical, Open Graph, Twitter card, `lang`, hreflang, robots, viewport, image alt attributes | One H1, all tags present |
 
@@ -127,7 +128,7 @@ The body is taken from the first match of a Drupal body field, `article`, `main`
 | `fr/seo-page-check.fr.js` | French messages, rules and examples |
 | `seo-page-check.css` | Styles, including light and dark themes (shared) |
 | `seo-page-check.js` | Checks, previews, editor and import logic (shared, English messages built in) |
-| `docs/` | Screenshots for this README |
+| `docs/` | Screenshots for this README, and the example article's featured image |
 
 ## Browser support
 

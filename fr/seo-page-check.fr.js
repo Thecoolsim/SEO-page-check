@@ -117,6 +117,9 @@ const msgs={
   imgRatioGood:'Le format est proche de 1,91:1 : l’image sera peu recadrée.',
   imgRatio:r=>'Le format est de '+dec(r,2)+':1. Les cartes sociales utilisent environ 1,91:1 : l’image sera recadrée.',
   imgDimUnknown:'Dimensions de l’image inconnues. Importez le fichier pour vérifier sa taille.',
+  imgLoading:'Chargement de l’image pour vérifier sa taille.',
+  imgError:'Impossible de charger l’image. Vérifiez que l’adresse est correcte et publique.',
+  imgUrlBad:'L’adresse de l’image doit être complète et commencer par https://.',
   sizeGood:s=>'Bon poids de fichier : '+s+'.',
   sizeOk:s=>'Le fichier pèse '+s+'. Sous 300 Ko, il se charge plus vite.',
   sizeBad:s=>'Le fichier pèse '+s+'. Compressez-le sous 1 Mo, idéalement sous 300 Ko.',
@@ -224,11 +227,12 @@ window.SEO_PAGE_CHECK_LANG={
   examples:{
     article:{kp:'récupération d’eau de pluie',title:'Récupération d’eau de pluie : le guide des petites fermes',domain:'example.org',slug:'guides/recuperation-eau-pluie-petites-fermes',
       desc:'La récupération d’eau de pluie aide les petites fermes à passer les périodes sèches. Voici comment choisir une cuve et garder une eau propre.',
-      alt:'Cuve de récupération d’eau de pluie près du toit d’une ferme',tags:'récupération d’eau de pluie, stockage de l’eau, agriculture, sécheresse',
+      alt:'Cuve de récupération d’eau de pluie près du toit d’une ferme',img_url:'../docs/example-rainwater.jpg',tags:'récupération d’eau de pluie, stockage de l’eau, agriculture, sécheresse',
       body:'<p>La récupération d’eau de pluie est l’un des moyens les moins chers pour aider une petite ferme face aux pluies irrégulières. En effet, un toit, une gouttière et une cuve suffisent à stocker de l’eau pour plusieurs semaines sèches.</p>\n'+
       '<h2>Combien d’eau pouvez-vous récupérer ?</h2>\n<p>Chaque mètre carré de toit recueille environ un litre d’eau par millimètre de pluie. Ainsi, un toit de 100 mètres carrés peut recueillir près de 60 000 litres par an dans une région qui reçoit 600 mm de pluie. Il faut toutefois déduire les pertes dues à l’évaporation et aux débordements. Le <a href="https://www.fao.org/">site de la FAO</a> donne des données de pluie par région pour faire ce calcul.</p>\n'+
-      '<h2>Choisir une cuve</h2>\n<p>D’abord, prévoyez une cuve pour la plus longue période sèche, et non pour toute l’année. Les cuves en plastique sont légères et faciles à poser. En revanche, les cuves en ferrociment coûtent moins cher par litre et durent plus longtemps. Elles demandent cependant plus de travail. Consultez notre <a href="/guides/cuves-stockage-eau">guide des cuves de stockage</a> pour les comparer.</p>\n'+
+      '<h2>Choisir une cuve pour la récupération d’eau de pluie</h2>\n<p>D’abord, prévoyez une cuve pour la plus longue période sèche, et non pour toute l’année. Les cuves en plastique sont légères et faciles à poser. En revanche, les cuves en ferrociment coûtent moins cher par litre et durent plus longtemps. Elles demandent cependant plus de travail. Consultez notre <a href="/guides/cuves-stockage-eau">guide des cuves de stockage</a> pour les comparer.</p>\n'+
       '<h2>Garder une eau propre</h2>\n<ul>\n  <li>Installez un séparateur de premier flot pour écarter l’eau la plus sale du toit.</li>\n  <li>Couvrez chaque ouverture d’une moustiquaire contre les insectes et les feuilles.</li>\n  <li>Nettoyez les gouttières avant la saison des pluies.</li>\n</ul>\n'+
+      '<h2>Entretenir l’installation</h2>\n<p>Une fois par an, videz la cuve et nettoyez le fond. Vérifiez aussi les joints et les raccords, car une petite fuite peut faire perdre beaucoup d’eau en été. De plus, contrôlez le couvercle : il doit rester bien fermé pour éviter les moustiques. Pour l’arrosage, un simple filtre suffit. En revanche, pour l’eau des animaux, demandez conseil à un technicien sur le traitement adapté.</p>\n'+
       '<p>Enfin, la récupération d’eau de pluie fonctionne mieux dans un plan plus large. Par exemple, associez-la au paillage, au goutte-à-goutte et à des cultures qui résistent à la sécheresse. Commencez petit, mesurez ce que vous récupérez la première saison, puis agrandissez votre installation.</p>'},
     video:{type:'video',kp:'big buck bunny',title:'Big Buck Bunny : le film d’animation libre de Blender',domain:'example.org',slug:'films/big-buck-bunny',
       desc:'Regardez Big Buck Bunny, le court métrage d’animation libre de la Blender Foundation : un lapin géant se venge de trois rongeurs en dix minutes.',

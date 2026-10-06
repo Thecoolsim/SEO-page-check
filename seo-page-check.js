@@ -129,6 +129,9 @@ const EN={
   imgRatioGood:'Aspect ratio is close to 1.91:1, so it will not be cropped much.',
   imgRatio:r=>'Aspect ratio is '+r.toFixed(2)+':1. Social cards use about 1.91:1, so it will be cropped.',
   imgDimUnknown:'Image dimensions are unknown. Upload the file to check its size.',
+  imgLoading:'Loading the image to check its size.',
+  imgError:'The image could not be loaded. Check that the address is correct and public.',
+  imgUrlBad:'The image address must be a full address starting with https://.',
   sizeGood:s=>'File size is good: '+s+'.',
   sizeOk:s=>'File size is '+s+'. Under 300 KB loads faster.',
   sizeBad:s=>'File size is '+s+'. Compress it below 1 MB, ideally below 300 KB.',
@@ -309,6 +312,19 @@ function probeThumb(){
   if(!/^https?:\/\/[^\s]+$/i.test(u)){TH.st='url';return}
   TH.st='loading';imgSize(u).then(r=>{if(TH.url!==u)return;if(r)Object.assign(TH,r,{st:'ok'});else TH.st='error';render()});
 }
+// A featured image given by address is loaded the same way to measure it. Its file size is read
+// from a HEAD request when the server allows it.
+const IM={url:'',st:''};
+const extType=u=>{const x=(u||'').split(/[?#]/)[0].match(/\.(jpe?g|png|webp|avif|gif|svg|bmp|tiff?)$/i);return x?x[1].toLowerCase().replace('jpg','jpeg'):''};
+function probeImg(){
+  const im=S.img,u=im&&!im.src&&im.remote?im.remote.trim():'';if(u===IM.url&&!(IM.st==='ok'&&!(im.w&&im.h)))return;
+  IM.url=u;IM.st='';if(!u)return;
+  if(!/^(https?|file):\/\/\S+$/i.test(u)){IM.st='url';return}
+  IM.st='loading';
+  imgSize(u).then(r=>{if(IM.url!==u||!S.img)return;if(r){Object.assign(S.img,r);IM.st='ok';save()}else IM.st='error';render()});
+  fetch(u,{method:'HEAD'}).then(r=>{const n=+r.headers.get('content-length');if(n&&IM.url===u&&S.img){S.img.bytes=n;save();render()}}).catch(()=>{});
+}
+function remoteImg(u){u=(u||'').trim();return u?{src:null,remote:u,w:0,h:0,bytes:0,type:extType(u),name:''}:null}
 function buildLD(){
   const V=parseVideo(S.vurl),du=parseDur(S.vdur),o={'@context':'https://schema.org','@type':'VideoObject'};
   const put=(k,v)=>{if(v)o[k]=v};
@@ -508,7 +524,8 @@ function analyse(){
       const r=im.w/im.h;
       if(Math.abs(r-1.91)<=0.15)add(gi,'good',m('imgRatioGood'));
       else add(gi,'ok',m('imgRatio',r));
-    }else add(gi,'ok',m('imgDimUnknown'));
+    }else if(im.remote&&!im.src&&IM.st&&IM.st!=='ok')add(gi,IM.st==='loading'?'ok':'bad',m(IM.st==='loading'?'imgLoading':IM.st==='url'?'imgUrlBad':'imgError'));
+    else add(gi,'ok',m('imgDimUnknown'));
     if(im.bytes){
       if(im.bytes<=300*1024)add(gi,'good',m('sizeGood',m('kb',im.bytes)));
       else if(im.bytes<=1024*1024)add(gi,'ok',m('sizeOk',m('kb',im.bytes)));
@@ -568,7 +585,7 @@ const RANK={bad:0,ok:1,good:2};const LABEL=T.label;
 const worst=items=>items.reduce((w,i)=>RANK[i.s]<RANK[w]?i.s:w,'good');
 
 function render(){
-  probeThumb();
+  probeThumb();probeImg();
   const G=analyse();const video=S.type==='video';
   const all=G.flatMap(g=>g.items);
   const n={good:0,ok:0,bad:0};all.forEach(i=>n[i.s]++);
@@ -620,16 +637,17 @@ function render(){
     (thumbOk?'<div class="serp-vid"><img alt="" src="'+esc(TH.url)+'">'+durTag+'</div>':'')+'</div>';
 
   const im=S.img;let imgHtml;
-  if(im&&im.src)imgHtml='<div class="img has"><img alt="" src="'+esc(im.src)+'"></div>';
+  const imSrc=im&&(im.src||(im.remote&&IM.st==='ok'?IM.url:''));
+  if(imSrc)imgHtml='<div class="img has"><img alt="" src="'+esc(imSrc)+'"></div>';
   else if(!im&&thumbOk)imgHtml='<div class="img has"><img alt="" src="'+esc(TH.url)+'"><span class="play"></span></div>';
   else if(im&&im.remote)imgHtml='<div class="img">'+esc(m('socialRemote'))+'<br>'+esc(im.remote.split('/').pop())+'</div>';
   else imgHtml='<div class="img">'+esc(m('noImage'))+'</div>';
   $('social').innerHTML=imgHtml+'<div class="txt"><div class="d">'+esc(dom)+'</div><div class="t">'+esc(t||m('socialTitle'))+'</div><div class="s">'+esc(d||m('socialDesc'))+'</div></div>';
 
   const th=$('thumb');
-  if(im&&im.src)th.innerHTML='<img alt="" src="'+esc(im.src)+'">';else th.textContent=im?m('remote'):m('none');
-  $('imgInfo').innerHTML=im?esc([im.name||(im.remote||''),im.w&&im.h?m('dims',im.w,im.h):'',im.bytes?m('kb',im.bytes):''].filter(Boolean).join(', '))+' <button type="button" class="ghost" id="rmImg" style="padding:2px 8px;font-size:12px;margin-left:6px">'+esc(m('remove'))+'</button>':'';
-  const rm=$('rmImg');if(rm)rm.onclick=()=>{S.img=null;$('imgFile').value='';save();render()};
+  if(imSrc)th.innerHTML='<img alt="" src="'+esc(imSrc)+'">';else th.textContent=im?(IM.st==='loading'?m('loading'):m('noImage')):m('none');
+  $('imgInfo').innerHTML=im?esc([im.name||'',im.w&&im.h?m('dims',im.w,im.h):'',im.bytes?m('kb',im.bytes):''].filter(Boolean).join(', '))+' <button type="button" class="ghost" id="rmImg" style="padding:2px 8px;font-size:12px;margin-left:6px">'+esc(m('remove'))+'</button>':'';
+  const rm=$('rmImg');if(rm)rm.onclick=()=>{S.img=null;$('imgFile').value='';$('imgUrl').value='';save();render()};
 }
 
 let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{save();render()},120)};
@@ -637,11 +655,13 @@ TEXT.forEach(k=>{const el=$(k);el.addEventListener('input',()=>{S[k]=el.value;if
 const radios=document.querySelectorAll('input[name=ptype]');
 function syncFields(){
   TEXT.forEach(k=>{$(k).value=S[k]||''});$('vcap').checked=!!S.vcap;
+  $('imgUrl').value=S.img&&!S.img.src&&S.img.remote||'';
   radios.forEach(r=>{r.checked=r.value===S.type});document.body.classList.toggle('is-video',S.type==='video');
 }
 syncFields();
 radios.forEach(r=>r.addEventListener('change',()=>{if(r.checked){S.type=r.value;syncFields();save();render()}}));
 $('vcap').addEventListener('change',e=>{S.vcap=e.target.checked;schedule()});
+$('imgUrl').addEventListener('input',e=>{$('imgFile').value='';S.img=remoteImg(e.target.value);schedule()});
 $('vfetch').addEventListener('click',async()=>{
   const V=parseVideo(S.vurl),msg=$('vmsg');
   if(!V||V.bad){msg.textContent=m('fetchFirst');return}
@@ -818,7 +838,7 @@ $('btnCopy').addEventListener('click',async()=>{
 
 
 $('imgFile').addEventListener('change',e=>{
-  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const f=e.target.files&&e.target.files[0];if(!f)return;$('imgUrl').value='';
   const r=new FileReader();
   r.onload=()=>{const i=new Image();i.onload=()=>{S.img={src:r.result,w:i.naturalWidth,h:i.naturalHeight,bytes:f.size,type:(f.type||'').replace('image/',''),name:f.name};save();render()};i.onerror=()=>{S.img={src:null,bytes:f.size,type:f.type,name:f.name};render()};i.src=r.result};
   r.readAsDataURL(f);
@@ -850,7 +870,8 @@ $('importBtn').addEventListener('click',()=>{
   root.querySelectorAll('h1').forEach(n=>n.remove());
   S.body=cleanHtml(root.innerHTML);setEditor(S.body);
   const og=meta('meta[property="og:image"]')||meta('meta[name="twitter:image"]');
-  if(og){const w=parseInt(meta('meta[property="og:image:width"]'))||0,h=parseInt(meta('meta[property="og:image:height"]'))||0;S.img={src:null,remote:og,w,h,bytes:0,type:'',name:''};
+  if(og){let abs=og;try{abs=new URL(og,pageUrl||undefined).href}catch(e){}
+    S.img=Object.assign(remoteImg(abs),{w:parseInt(meta('meta[property="og:image:width"]'))||0,h:parseInt(meta('meta[property="og:image:height"]'))||0});
     const fn=og.split('/').pop().split('?')[0];const match=[...doc.querySelectorAll('img')].find(i=>(i.getAttribute('src')||'').includes(fn));
     if(match&&match.getAttribute('alt'))S.alt=match.getAttribute('alt');}
   S.tech={h1:doc.querySelectorAll('h1').length,canonical:!!canonical,ogTitle:!!meta('meta[property="og:title"]'),ogDesc:!!meta('meta[property="og:description"]'),ogImage:!!meta('meta[property="og:image"]'),
@@ -875,7 +896,7 @@ $('importBtn').addEventListener('click',()=>{
 
 const EXAMPLES=Object.assign({},{article:{kp:'rainwater harvesting',title:'Rainwater harvesting: a practical guide for small farms',domain:'example.org',slug:'guides/rainwater-harvesting-small-farms',
   desc:'Rainwater harvesting helps small farms get through dry spells. Learn how to size a tank, choose a catchment surface and keep stored water clean.',
-  alt:'Rainwater harvesting tank beside a farmhouse roof',tags:'rainwater harvesting, water storage, farming, drought',
+  alt:'Rainwater harvesting tank beside a farmhouse roof',img_url:'docs/example-rainwater.jpg',tags:'rainwater harvesting, water storage, farming, drought',
   body:'<p>Rainwater harvesting is one of the cheapest ways for a small farm to cope with irregular rainfall. A roof, a gutter and a tank can store enough water to keep livestock and a vegetable plot going through several dry weeks.</p>\n'+
   '<h2>How much water can you collect?</h2>\n<p>Every square metre of roof collects about one litre of water for each millimetre of rain. A 100 square metre roof in an area with 600 mm of rain a year can therefore collect around 60,000 litres, minus losses from evaporation and overflow. The <a href="https://www.fao.org/land-water/en/">FAO land and water pages</a> give regional rainfall data you can use for this estimate.</p>\n'+
   '<h2>Choosing a tank</h2>\n<p>Size the tank to cover the longest dry spell you expect, not the whole year. Plastic tanks are light and easy to install. Ferro-cement tanks cost less per litre and last longer, but they take more work to build. See our <a href="/guides/water-storage-tanks">guide to water storage tanks</a> for a comparison.</p>\n'+
@@ -890,7 +911,7 @@ const EXAMPLES=Object.assign({},{article:{kp:'rainwater harvesting',title:'Rainw
   body:'<p>Big Buck Bunny is a short animated film made by the Blender Foundation with free and open source software. It was released in 2008 under a Creative Commons licence, so anyone can watch, share and reuse it.</p>\n'+
   '<p>Watch the full film above, or read the transcript for a description of each scene. The <a href="https://peach.blender.org/">official Big Buck Bunny site</a> has the production files. See our <a href="/films">list of open movies</a> for more.</p>'}
 },LANG.examples);
-$('exampleBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,S.type==='video'?EXAMPLES.video:EXAMPLES.article);setEditor(S.body);syncFields();$('imgFile').value='';
+$('exampleBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,S.type==='video'?EXAMPLES.video:EXAMPLES.article);if(S.img_url)S.img=remoteImg(new URL(S.img_url,location.href).href);delete S.img_url;setEditor(S.body);syncFields();$('imgFile').value='';
   $('importMsg').textContent=m('exampleLoaded');save();render()});
 
 $('clearBtn').addEventListener('click',()=>{S=Object.assign({},EMPTY,{domain:S.domain||'',type:S.type});setEditor('');syncFields();$('imgFile').value='';$('src').value='';$('importMsg').textContent='';save();render()});
