@@ -94,6 +94,8 @@ The French page at [`/fr/`](https://thecoolsim.github.io/SEO-page-check/fr/) use
 
 Numbers, dates and file sizes use French formats (`3,2 %`, `29/05/2008`, `250 Ko`), and the messages use non-breaking spaces before `:` and `%`. The French page keeps its own draft in the browser, separate from the English one. The two pages link to each other with `hreflang` alternates.
 
+![French version screenshot](docs/screenshot-fr.png)
+
 ### Adding a language
 
 Copy `fr/` to a new folder, translate `index.html`, and adapt the language file. It sets `window.SEO_PAGE_CHECK_LANG` to `{rules, msgs, examples}` before `seo-page-check.js` loads. Any message left out falls back to English. The rules are `storageKey`, `stopwords`, `typography`, `readability` (`base`, `perWord`, `perSyllable`), `transitions` and `sentenceMax`.
